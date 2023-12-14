@@ -1,6 +1,6 @@
 {
   "name": "@master4n/decorators",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Node Decorators For Application",
   "main": "cjs/index.cjs",
   "module": "es/index.mjs",
