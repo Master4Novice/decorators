@@ -16,7 +16,10 @@
     "url": "git+https://github.com/Master4Novice/common.git"
   },
   "keywords": [
-    "types"
+    "decorators",
+    "yaml",
+    "yml",
+    "property"
   ],
   "author": "dwivna",
   "license": "MIT",
