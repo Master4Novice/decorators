@@ -13,7 +13,7 @@ This package contains decorators for Master4Novice. Kindly set true for the belo
 
 ## Details
 
-Files were exported from the package. 
+Files were exported from the package.
 
 ````ts
  @Value('server.port') // Set any class property from environment specific YAML file in config folder
