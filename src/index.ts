@@ -1,1 +1,1 @@
-export { Value } from './services/property';
+export { Value, GenerateID } from './services/property';

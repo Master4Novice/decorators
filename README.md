@@ -17,11 +17,12 @@ Files were exported from the package.
 
 ````ts
  @Value('server.port') // Set any class property from environment specific YAML file in config folder
+ @GenerateID // Set any class property as a UUID value.
 ````
 
 ### Additional Details
 
-* Last updated: Thur, 14 Dec 2023
+* Last updated: Fri, 05 Jan 2024
 * Dependencies: none
 
 ## Credits

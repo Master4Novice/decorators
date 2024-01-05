@@ -18,7 +18,7 @@ const config = [
             sourcemap: true,
          }
     ],
-    external: [ 'config' ],
+    external: [ 'config', 'uuid' ],
     plugins: [
         resolve(),
         typescript(),
