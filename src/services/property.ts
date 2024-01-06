@@ -14,10 +14,21 @@ export function Value(key: string, value?: any) {
 /**
  * Decorator can set a class property as UUIDv4 value
  */
-export function GenerateID() {
-  const uuidSymbol = Symbol('uuid');
-  const key = {[uuidSymbol]: uuidv4()}  
-  return (target: any, propertyKey: string): any => {
-      Reflect.set(target, propertyKey, key[uuidSymbol]);
-  };
+export function GenerateID(target: any, key: string): void {
+    const uuidSymbol = Symbol('uuid');
+    const getter = function (this: any) {
+      if (!this[uuidSymbol]) {
+        this[uuidSymbol] = uuidv4();
+      }
+      return this[uuidSymbol];
+    };
+    const setter = function (this: any, value: string) {
+      this[uuidSymbol] = value;
+    };
+    Object.defineProperty(target, key, {
+      get: getter,
+      set: setter,
+      enumerable: true,
+      configurable: true,
+    });
 }
