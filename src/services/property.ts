@@ -55,14 +55,14 @@ export function NotNull(target: any, key: string, descriptor: PropertyDescriptor
 /**
  * Decorator for date validation.
  */
-export function ValidDate(target: any, key: string | symbol, index: number) {
+export function ValidDate(target: any, key: string | symbol) {
   const originalMethod = target[key];
 
   target[key] = function (...args: any[]) {
-    const dateParam = args[index];
+    const dateParam = args[0];
 
     if (!isValidDate(dateParam) && dateParam !== undefined) {
-      throw new Error(`Invalid parameter at index ${index}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`);
+      throw new Error(`Invalid parameter at index ${0}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`);
     }
 
     return originalMethod.apply(this, args);
