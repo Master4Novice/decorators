@@ -1,6 +1,6 @@
 {
   "name": "@master4n/decorators",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Common Decorators Library",
   "main": "./commonjs/index.cjs",
   "module": "./esm/index.js",
