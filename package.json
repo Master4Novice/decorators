@@ -2,13 +2,13 @@
   "name": "@master4n/decorators",
   "version": "1.0.9",
   "description": "Common Decorators Library",
-  "main": "./index.cjs",
-  "module": "./index.js",
+  "main": "./commonjs/index.cjs",
+  "module": "./esm/index.js",
   "types": "./index.d.ts",
   "type": "module",
   "exports": {
-    "import": "./index.js",
-    "require": "./index.cjs",
+    "import": "./esm/index.js",
+    "require": "./commonjs/index.cjs",
     "types": "./index.d.ts"
   },
   "scripts": {
