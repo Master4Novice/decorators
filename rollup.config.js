@@ -8,20 +8,22 @@ const config = [
     input: 'src/index.ts',
     output: [
         {
-           file: 'dist/cjs/index.cjs',
+           file: 'dist/index.cjs',
            format: 'cjs',
            sourcemap: true,
         },
         {
-            file: 'dist/es/index.mjs',
-            format: 'es',
+            file: 'dist/index.js',
+            format: 'esm',
             sourcemap: true,
          }
     ],
     external: [ 'config', 'uuid', 'js-yaml' ],
     plugins: [
         resolve(),
-        typescript(),
+        typescript({
+          tsconfig: 'tsconfig.json'
+        }),
         copy({
           targets: [
             { src: ["package.json", "README.md", "../../LICENSE"], dest: "dist" }
@@ -35,7 +37,9 @@ const config = [
       format: 'es'
     },
     plugins: [
-        dts()
+        dts({
+          tsconfig: 'tsconfig.json'
+        })
     ]
   }
 ];

@@ -4,17 +4,28 @@ import { v4 as uuidv4 } from 'uuid';
 /***
  * Decorator can set a class property value from YAML file
  * @param key a key from yaml file.
+ * @param value a default direct value. 
  */
-export function Value(key: string, value?: any) {
-    return (target: any, propertyKey: string): any => {
-        Reflect.set(target, propertyKey, readYMLKey(key, value));
+export function Value(key: string, value?: any): PropertyDecorator {
+    return function (target: any, propertyKey: string | symbol) {
+      Object.defineProperty(target, propertyKey, {
+        set: function (this: any, val: any){
+          console.log(`Setting ${String(propertyKey)} to ${val}`);
+          this[`_${String(propertyKey)}`] = readYMLKey(key, value);
+        },
+        get: function (this: any) {
+          return this[`_${String(propertyKey)}`];
+        },
+        enumerable: true,
+        configurable: true,
+      });   
     };
 }
 
 /**
  * Decorator can set a class property as UUIDv4 value
  */
-export function GenerateID(target: any, key: string): void {
+export function GenerateID(target: any, key: string) {
     const uuidSymbol = Symbol('uuid');
     const getter = function (this: any) {
       if (!this[uuidSymbol]) {
@@ -30,7 +41,7 @@ export function GenerateID(target: any, key: string): void {
       set: setter,
       enumerable: true,
       configurable: true,
-    });
+    }); 
 }
 
 /**

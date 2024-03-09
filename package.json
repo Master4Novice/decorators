@@ -1,11 +1,16 @@
 {
   "name": "@master4n/decorators",
   "version": "1.0.8",
-  "description": "Node Decorators For Application",
-  "main": "cjs/index.cjs",
-  "module": "es/index.mjs",
-  "types": "index.d.ts",
+  "description": "Common Decorators Library",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.ts",
   "type": "module",
+  "exports": {
+    "import": "./index.js",
+    "require": "./index.cjs",
+    "types": "./index.d.ts"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && rollup --config",
@@ -28,8 +33,7 @@
   },
   "homepage": "https://github.com/Master4Novice/common#readme",
   "devDependencies": {
-    "@types/config": "^3.3.3",
-    "typescript": "^5.3.3"
+    "@types/config": "^3.3.3"
   },
   "publishConfig": {
     "directory": "dist",
