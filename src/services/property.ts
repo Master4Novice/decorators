@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
  * @param key a key from yaml file.
  * @param value a default direct value. 
  */
-export function Value(key: string, value?: any): PropertyDecorator {
+export function Value(key: string, value?: any) {
     return function (target: any, propertyKey: string | symbol) {
       Object.defineProperty(target, propertyKey, {
         set: function (this: any, val: any){
