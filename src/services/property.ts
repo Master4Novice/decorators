@@ -3,23 +3,28 @@ import { v4 as uuidv4 } from 'uuid';
 
 /***
  * Decorator can set a class property value from YAML file
- * @param key a key from yaml file.
- * @param value a default direct value. 
+ * @param ymlKey a key from yaml file.
+ * @param ymlValue a default direct value. 
  */
-export function Value(key: string, value?: any) {
-    return function (target: any, propertyKey: string | symbol) {
-      Object.defineProperty(target, propertyKey, {
-        set: function (this: any, val: any){
-          console.log(`Setting ${String(propertyKey)} to ${val}`);
-          this[`_${String(propertyKey)}`] = readYMLKey(key, value);
-        },
-        get: function (this: any) {
-          return this[`_${String(propertyKey)}`];
-        },
-        enumerable: true,
-        configurable: true,
-      });   
+export function Value(ymlKey: string, ymlValue?: any) {
+  return function (target: any, propertyKey: string) {
+    const ymlSymbol = Symbol('yml');
+    const getter = function (this: any) {
+      if (!this[ymlSymbol]) {
+        this[ymlSymbol] = readYMLKey(ymlKey, ymlValue);
+      }
+      return this[ymlSymbol];
     };
+    const setter = function (this: any, value: string) {
+      this[ymlSymbol] = value;
+    };
+    Object.defineProperty(target, propertyKey, {
+      get: getter,
+      set: setter,
+      enumerable: true,
+      configurable: true,
+    }); 
+  };
 }
 
 /**
