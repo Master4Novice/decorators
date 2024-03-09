@@ -44,5 +44,10 @@
     "config": "^3.3.9",
     "js-yaml": "^4.1.0",
     "uuid": "^9.0.1"
-  }
+  },
+  "contributors": [
+    {
+      "name": "dwivna"
+    }
+  ]
 }
