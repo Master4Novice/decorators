@@ -59,7 +59,7 @@ export function NotNull(target: any, key: string, descriptor: PropertyDescriptor
   descriptor.value = function (...args: any[]) {
     args.forEach((arg, index) => {
       if (arg === null || arg === undefined) {
-        logger.error(`Error: ${arg} must not be ${null} or ${undefined}`);
+        logger.error(`Error: Arguments must not be ${null} or ${undefined}`);
       }
     });
 
