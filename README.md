@@ -50,6 +50,8 @@ This package contains decorators for any applications. Kindly set true for the b
 |Value|Class Property|Read the value from yaml file and assigned it to class property|
 |GenerateID|Class Property|Assigne unique UUID value to class property|
 |NotNull|Method Parameter|Check if parameter is not null and undefined|
+|Counter|Static Property Parameter|Create static counter|
+|Log|Method Parameter|Log in and out of method|
 
 ## Credits
 

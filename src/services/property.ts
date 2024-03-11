@@ -1,4 +1,5 @@
 import { readYMLKey } from '../utilities/read';
+import { logger } from '../utilities/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 /***
@@ -58,7 +59,7 @@ export function NotNull(target: any, key: string, descriptor: PropertyDescriptor
   descriptor.value = function (...args: any[]) {
     args.forEach((arg, index) => {
       if (arg === null || arg === undefined) {
-        throw new Error(`${key} must not be ${null} or ${undefined}`);
+        logger.error(`Error: ${arg} must not be ${null} or ${undefined}`);
       }
     });
 
@@ -78,7 +79,7 @@ export function ValidDate(target: any, key: string | symbol) {
     const dateParam = args[0];
 
     if (!isValidDate(dateParam) && dateParam !== undefined) {
-      throw new Error(`Invalid parameter at index ${0}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`);
+      logger.error(`Error: Invalid parameter at index ${0}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`);
     }
 
     return originalMethod.apply(this, args);
@@ -105,4 +106,56 @@ function isValidDate(dateObj: any): boolean {
   }
 
   return false;
+}
+
+/**
+ * Decorator for static property of class. 
+ * It will make static property work as counter
+ */
+export function Counter(target: any, propertyKey: string) {
+  // Ensure the counter is stored on the class constructor
+  if (!target.constructor.hasOwnProperty('_counters')) {
+    Object.defineProperty(target.constructor, '_counters', {
+      value: {},
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  // Initialize the counter for the property
+  if (!target.constructor._counters[propertyKey]) {
+    target.constructor._counters[propertyKey] = 0;
+  }
+
+  // Create a getter function to increment and return the counter value
+  const getter = function (this: any) {
+    target.constructor._counters[propertyKey]++;
+    return target.constructor._counters[propertyKey];
+  };
+
+  // Redefine the property with the new getter
+  Object.defineProperty(target, propertyKey, {
+    get: getter,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
+/**
+ * Decorator logging in and out of method.
+ */
+export function Log() {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = function (...args: any[]) {
+      logger.info(`Entering ${propertyKey}`);
+      const result = originalMethod.apply(this, args);
+      logger.info(`Exiting ${propertyKey}`);
+      return result;
+    };
+
+    return descriptor;
+  };
 }

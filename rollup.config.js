@@ -19,7 +19,7 @@ const config = [
             sourcemap: true,
          }
     ],
-    external: [ 'config', 'uuid', 'js-yaml' ],
+    external: [ 'config', 'uuid', 'js-yaml', 'winston', 'os' ],
     plugins: [
         resolve(),
         terser(),
