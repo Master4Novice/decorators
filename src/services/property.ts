@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 /***
  * Decorator can set a class property value from YAML file
  * @param ymlKey a key from yaml file.
- * @param ymlValue a default direct value. 
+ * @param ymlValue a default direct value.
  */
 export function Value(ymlKey: string, ymlValue?: any) {
   return function (target: any, propertyKey: string) {
@@ -24,7 +24,7 @@ export function Value(ymlKey: string, ymlValue?: any) {
       set: setter,
       enumerable: true,
       configurable: true,
-    }); 
+    });
   };
 }
 
@@ -32,32 +32,36 @@ export function Value(ymlKey: string, ymlValue?: any) {
  * Decorator can set a class property as UUIDv4 value
  */
 export function GenerateID(target: any, key: string) {
-    const uuidSymbol = Symbol('uuid');
-    const getter = function (this: any) {
-      if (!this[uuidSymbol]) {
-        this[uuidSymbol] = uuidv4();
-      }
-      return this[uuidSymbol];
-    };
-    const setter = function (this: any, value: string) {
-      this[uuidSymbol] = value;
-    };
-    Object.defineProperty(target, key, {
-      get: getter,
-      set: setter,
-      enumerable: true,
-      configurable: true,
-    }); 
+  const uuidSymbol = Symbol('uuid');
+  const getter = function (this: any) {
+    if (!this[uuidSymbol]) {
+      this[uuidSymbol] = uuidv4();
+    }
+    return this[uuidSymbol];
+  };
+  const setter = function (this: any, value: string) {
+    this[uuidSymbol] = value;
+  };
+  Object.defineProperty(target, key, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
 }
 
 /**
  * Decorator will allow defined and non null values only.
  */
-export function NotNull(target: any, key: string, descriptor: PropertyDescriptor) {
+export function NotNull(
+  target: any,
+  key: string,
+  descriptor: PropertyDescriptor,
+) {
   const originalMethod = descriptor.value;
 
   descriptor.value = function (...args: any[]) {
-    args.forEach((arg, index) => {
+    args.forEach((arg) => {
       if (arg === null || arg === undefined) {
         logger.error(`Error: Arguments must not be ${null} or ${undefined}`);
       }
@@ -79,7 +83,9 @@ export function ValidDate(target: any, key: string | symbol) {
     const dateParam = args[0];
 
     if (!isValidDate(dateParam) && dateParam !== undefined) {
-      logger.error(`Error: Invalid parameter at index ${0}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`);
+      logger.error(
+        `Error: Invalid parameter at index ${0}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`,
+      );
     }
 
     return originalMethod.apply(this, args);
@@ -98,9 +104,14 @@ function isValidDate(dateObj: any): boolean {
     const month = parseInt(dateObj.MM, 10);
     const year = parseInt(dateObj.YYYY, 10);
 
-    const isValidJavaScriptDate = !isNaN(year) && !isNaN(month) && !isNaN(day) &&
-      month >= 1 && month <= 12 &&
-      day >= 1 && day <= new Date(year, month, 0).getDate();
+    const isValidJavaScriptDate =
+      !isNaN(year) &&
+      !isNaN(month) &&
+      !isNaN(day) &&
+      month >= 1 &&
+      month <= 12 &&
+      day >= 1 &&
+      day <= new Date(year, month, 0).getDate();
 
     return isValidJavaScriptDate;
   }
@@ -109,7 +120,7 @@ function isValidDate(dateObj: any): boolean {
 }
 
 /**
- * Decorator for static property of class. 
+ * Decorator for static property of class.
  * It will make static property work as counter
  */
 export function Counter(target: any, propertyKey: string) {
@@ -146,7 +157,11 @@ export function Counter(target: any, propertyKey: string) {
  * Decorator logging in and out of method.
  */
 export function Log() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) {
     const originalMethod = descriptor.value;
 
     descriptor.value = function (...args: any[]) {
