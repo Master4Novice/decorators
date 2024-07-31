@@ -28,7 +28,26 @@ const config = [
         }),
         copy({
           targets: [
-            { src: ["package.json", "README.md", "../../LICENSE"], dest: "dist" }
+            { src: ["README.md", "../../LICENSE"], dest: "dist" },
+            { 
+              src: 'package.json', 
+              dest: 'dist',
+              transform: (contents) => {
+                const pkg = JSON.parse(contents.toString());
+                const importType = "./esm/index.js";
+                const requireType = "./commonjs/index.cjs";
+                const types = "./index.d.ts";
+                pkg.main = requireType;
+                pkg.module = importType;
+                pkg.types = types;
+                pkg.exports = {
+                  import: importType,
+                  require: requireType,
+                  types: types
+                }
+                return JSON.stringify(pkg, null, 2);
+              }
+            }
           ]
         })
     ]

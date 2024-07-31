@@ -1,5 +1,5 @@
-import { readYMLKey } from '../utilities/read';
-import { logger } from '../utilities/logger';
+import { readYMLKey } from '../utilities/read.js';
+import { logger } from '../utilities/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 /***
