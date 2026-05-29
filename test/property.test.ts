@@ -109,7 +109,7 @@ describe('@ValidDate', () => {
 });
 
 describe('@Log', () => {
-  it('logs entry/exit and returns the original result', () => {
+  it('logs entry/exit and returns the original result (no options)', () => {
     class Svc {
       @Log()
       add(a: number, b: number) {
@@ -119,5 +119,46 @@ describe('@Log', () => {
     expect(new Svc().add(2, 3)).toBe(5);
     expect(mockInfo).toHaveBeenCalledWith('Entering add');
     expect(mockInfo).toHaveBeenCalledWith('Exiting add');
+  });
+
+  it('logs redacted arguments when args: true', () => {
+    class Svc {
+      @Log({ args: true })
+      charge(card: { number: string; cvv: string }) {
+        return 'ok';
+      }
+    }
+    new Svc().charge({ number: '4111', cvv: '999' });
+    const entry = mockInfo.mock.calls
+      .map((c) => String(c[0]))
+      .find((m) => m.startsWith('Entering'))!;
+    expect(entry).toContain('"cvv":"[REDACTED]"');
+    expect(entry).not.toContain('999');
+  });
+
+  it('logs the result when result: true', () => {
+    class Svc {
+      @Log({ result: true })
+      add(a: number, b: number) {
+        return a + b;
+      }
+    }
+    new Svc().add(2, 3);
+    expect(mockInfo).toHaveBeenCalledWith('Exiting add result=5');
+  });
+
+  it('awaits and logs async results', async () => {
+    class Svc {
+      @Log({ result: true })
+      async fetch() {
+        return { token: 'abc', ok: true };
+      }
+    }
+    await new Svc().fetch();
+    const exit = mockInfo.mock.calls
+      .map((c) => String(c[0]))
+      .find((m) => m.startsWith('Exiting'))!;
+    expect(exit).toContain('"token":"[REDACTED]"');
+    expect(exit).toContain('"ok":true');
   });
 });

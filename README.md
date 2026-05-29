@@ -147,7 +147,7 @@ Resolvers/predicates may be async (the guarded call then returns a promise).
 | ------------------ | --------------- | ------------------------------------------------------ |
 | `@GenerateID`      | class property  | assigns a lazy UUIDv4 (via `crypto.randomUUID()`).     |
 | `@Counter`         | static property | auto-incrementing counter on each read.                |
-| `@Log()`           | method          | logs entry/exit around the method.                     |
+| `@Log(opts?)`      | method          | logs entry/exit; `{ args, result }` also log **redacted** args/return; `{ level }` sets the level. |
 | `@Retry(n, opts?)` | method          | retries on failure (sync/async); `opts.delayMs` for async. |
 | `@Memoize`         | method          | caches results by argument JSON, per instance.         |
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
@@ -161,7 +161,7 @@ class Job {
   @Counter static runs: number;   // increments on each read
 
   @Retry(3, { delayMs: 200 })
-  @Log()
+  @Log({ args: true, result: true }) // logged args/result are redacted
   async run() { /* ... */ }
 
   @Memoize

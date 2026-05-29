@@ -4,6 +4,16 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] — 2026-05-30
+
+### Added
+
+- `@Log(options?)` can now optionally log **redacted** arguments (`{ args: true }`)
+  and/or the return value (`{ result: true }`), choose a `{ level }`, and pass
+  `{ redact }` options. Args/result are masked via `redact()` so secrets never
+  reach the logs. Async methods are logged on settlement. `@Log()` with no
+  options is unchanged. `LogOptions` type exported.
+
 ## [2.1.0] — 2026-05-30
 
 ### Added
@@ -77,6 +87,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.2.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.0.0
 [1.2.0]: https://github.com/Master4Novice/decorators/releases/tag/v1.2.0

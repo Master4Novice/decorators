@@ -81,7 +81,9 @@ class AppConfig {
 
 - `@GenerateID` (property) — lazily assigns a UUIDv4 (node:crypto.randomUUID).
 - `@Counter` (static property) — auto-incrementing counter on each read.
-- `@Log()` (method) — logs entry/exit.
+- `@Log(options?)` (method) — logs entry/exit. Options: `{ args?: boolean }` logs redacted
+  arguments, `{ result?: boolean }` logs the redacted return value, `{ level? }` sets the log
+  level, `{ redact? }` passes RedactOptions. Args/result are masked via `redact()`. Async-aware.
 - `@Retry(attempts=3, { delayMs? })` (method) — retries on failure; sync and async.
 - `@Memoize` (method) — caches results by JSON of args, per instance.
 - `@Deprecated(message?)` (method) — logs a one-time deprecation warning.

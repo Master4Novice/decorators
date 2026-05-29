@@ -15,6 +15,7 @@ export {
   Counter,
   Log,
 } from './services/property.js';
+export type { LogOptions } from './services/property.js';
 export { ValidationError, ForbiddenError } from './services/errors.js';
 export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';

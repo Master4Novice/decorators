@@ -1,6 +1,7 @@
 import { logger } from '../utilities/logger.js';
 import { randomUUID } from 'node:crypto';
 import { ValidationError } from './errors.js';
+import { redact, type RedactOptions } from '../utilities/redact.js';
 
 // NOTE: `Value` and the config/value-injection family now live in
 // ./injection.ts (registry-backed, robust under `@Configured`). This module
@@ -151,10 +152,42 @@ export function Counter(target: any, propertyKey: string) {
   });
 }
 
+export interface LogOptions {
+  /** Also log the (redacted) arguments on entry. Default false. */
+  args?: boolean;
+  /** Also log the (redacted) return value on exit. Default false. */
+  result?: boolean;
+  /** Log level to use. Default 'info'. */
+  level?: 'info' | 'debug' | 'verbose' | 'warn' | 'error';
+  /** Redaction options applied to logged args/result (see `redact`). */
+  redact?: RedactOptions;
+}
+
+function isPromiseLike(value: unknown): value is Promise<unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { then?: unknown }).then === 'function'
+  );
+}
+
 /**
- * Decorator logging in and out of method.
+ * Method decorator: logs entry and exit. With options it can also log the
+ * **redacted** arguments and/or return value — secrets (`@Secret` fields and
+ * {@link DEFAULT_SENSITIVE_KEYS}) are masked before logging.
+ *
+ * `@Log()` with no options keeps the original entry/exit-only behavior.
+ *
+ * @example
+ * class Api {
+ *   \@Log({ args: true, result: true })
+ *   charge(card: { number: string; cvv: string }, amount: number) { ... }
+ *   // logs: Entering charge args=[{"number":"...","cvv":"[REDACTED]"}, 100]
+ * }
  */
-export function Log() {
+export function Log(options: LogOptions = {}) {
+  const level = options.level ?? 'info';
+
   return function (
     target: any,
     propertyKey: string,
@@ -163,9 +196,42 @@ export function Log() {
     const originalMethod = descriptor.value;
 
     descriptor.value = function (...args: any[]) {
-      logger.info(`Entering ${propertyKey}`);
+      const emit = (message: string) => {
+        const fn = (logger as unknown as Record<string, unknown>)[level];
+        (typeof fn === 'function' ? (fn as typeof logger.info) : logger.info)(
+          message,
+        );
+      };
+      const safe = (value: unknown) =>
+        JSON.stringify(redact(value, options.redact));
+
+      emit(
+        options.args
+          ? `Entering ${propertyKey} args=${safe(args)}`
+          : `Entering ${propertyKey}`,
+      );
+
+      const logExit = (value: unknown) =>
+        emit(
+          options.result
+            ? `Exiting ${propertyKey} result=${safe(value)}`
+            : `Exiting ${propertyKey}`,
+        );
+
       const result = originalMethod.apply(this, args);
-      logger.info(`Exiting ${propertyKey}`);
+      if (isPromiseLike(result)) {
+        return result.then(
+          (value) => {
+            logExit(value);
+            return value;
+          },
+          (error) => {
+            emit(`Exiting ${propertyKey}`);
+            throw error;
+          },
+        );
+      }
+      logExit(result);
       return result;
     };
 
