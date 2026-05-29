@@ -1,5 +1,6 @@
 import winston from 'winston';
 import os from 'os';
+import { redactFormat } from './redact.js';
 
 const label = (value: string) => winston.format.label({ label: `${value}` });
 
@@ -18,6 +19,7 @@ export const logger = winston.createLogger({
     env: process.env.NODE_ENV ? process.env.NODE_ENV : 'local',
   },
   format: winston.format.combine(
+    redactFormat(),
     label('Master4Novice'),
     winston.format.colorize(),
     winston.format.timestamp(),

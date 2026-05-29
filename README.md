@@ -77,14 +77,37 @@ class DbConfig {
 | ------------------------ | ------------------------------- | ---------------------------------------------------------------- |
 | `@Value(key, default?)`  | config files (YAML/JSON)        | via [`node-config`]. Required (throws) when no default is given. |
 | `@Env(name, default?)`   | `process.env`                   | coerces to the default's type (number/boolean/array).            |
-| `@Secret(name, default?)`| `process.env`                   | like `@Env`; registers the field name via `getSecretKeys()` so you can wire it into your logger's redaction (the package does not redact for you yet). |
+| `@Secret(name, default?)`| `process.env`                   | like `@Env`; marks the field as secret so `redact()` / `redactFormat()` mask it (see [Secret redaction](#secret-redaction)). |
 | `@Config(path)`          | config files                    | injects a whole config subtree/object (required).                |
 | `@Default(value)`        | literal                         | injects a constant.                                              |
 | `@Configured`            | _class decorator_               | materializes the above as own instance props (robust mode).      |
 
 Missing required values throw `MissingConfigError`. With `@Configured`, that
 happens at construction — so misconfiguration fails at startup, not deep in a
-request. `getSecretKeys()` returns the names of `@Secret` fields for redaction.
+request.
+
+### Secret redaction
+
+`@Secret` doesn't just track names — it makes those values disappear from logs.
+
+- `redact(value, options?)` returns a deep copy with sensitive values masked
+  (`'[REDACTED]'`). Sensitive = `@Secret`-marked property names ∪ a built-in list
+  (`DEFAULT_SENSITIVE_KEYS`: `password`, `token`, `apiKey`, `authorization`, …) ∪
+  `options.keys`. Matching is case- and `_`/`-`-insensitive; nested objects,
+  arrays, and circular references are handled.
+- `redactFormat(options?)` is a winston format. This package's own logger already
+  uses it; add it to your logger's `format.combine(...)` to protect your logs too.
+
+```ts
+import { redact, redactFormat } from '@master4n/decorators';
+import winston from 'winston';
+
+logger.info('Loaded config', redact(appConfig)); // jwtSecret -> [REDACTED]
+
+const logger = winston.createLogger({
+  format: winston.format.combine(redactFormat(), winston.format.json()),
+});
+```
 
 ## Validation & access (these throw)
 

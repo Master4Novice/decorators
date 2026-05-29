@@ -20,3 +20,9 @@ export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';
 export { Retry, Memoize, Deprecated, Measure } from './services/utility.js';
 export { loadEnv, parseEnv } from './utilities/env.js';
+export {
+  redact,
+  redactFormat,
+  DEFAULT_SENSITIVE_KEYS,
+} from './utilities/redact.js';
+export type { RedactOptions } from './utilities/redact.js';

@@ -38,6 +38,16 @@ Helpers: `loadEnv({ path?, override? })` loads a `.env` file into `process.env`
 automatically. `parseEnv(content)` parses `.env` text. `MissingConfigError` is the
 thrown error type. `getSecretKeys()` returns `@Secret` property names.
 
+## Secret redaction
+
+- `redact(value, { keys?, mask?, maxDepth? })` — deep copy with sensitive values masked.
+  Sensitive keys = `@Secret` property names ∪ `DEFAULT_SENSITIVE_KEYS` (password, token,
+  apikey, authorization, jwt, ssn, ...) ∪ `keys`. Case/`_`/`-`-insensitive; handles nested
+  objects, arrays, circular refs; passes Date/primitives through. Default mask `[REDACTED]`.
+- `redactFormat({ ... })` — a winston format that masks sensitive log fields. The package
+  logger already uses it; add it to your own `winston.format.combine(...)`.
+- `DEFAULT_SENSITIVE_KEYS` — the built-in sensitive key list.
+
 Note: `@Env`/`@Secret` read `process.env`. Node does not auto-load `.env` files;
 `@Configured` auto-calls `loadEnv()`, or run `node --env-file=.env`, or call `loadEnv()`.
 

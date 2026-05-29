@@ -33,6 +33,11 @@ describe('built dist bundle', () => {
       'Memoize',
       'Deprecated',
       'Measure',
+      'loadEnv',
+      'parseEnv',
+      'redact',
+      'redactFormat',
+      'DEFAULT_SENSITIVE_KEYS',
     ]) {
       expect(typeof dec[name]).not.toBe('undefined');
     }

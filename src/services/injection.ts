@@ -168,14 +168,16 @@ export function Env(name: string, fallback?: unknown) {
 }
 
 /**
- * Like {@link Env}, but marks the property as a secret so logging utilities can
- * redact it. The value is read from `process.env` exactly like `@Env`.
+ * Like {@link Env}, but marks the property name as a secret so it is redacted by
+ * `redact()` and the `redactFormat()` winston format (used by this package's
+ * logger). The value is read from `process.env` exactly like `@Env`.
  *
  * @example
  * \@Configured
  * class Auth {
  *   \@Secret('JWT_SECRET') jwtSecret!: string;
  * }
+ * // redact(new Auth()) -> { jwtSecret: '[REDACTED]' }
  */
 export function Secret(name: string, fallback?: unknown) {
   const hasFallback = arguments.length > 1;
