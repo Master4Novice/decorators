@@ -1,14 +1,5 @@
 import { jest } from '@jest/globals';
 
-// Mock the `config` module so @Value / readYMLKey are deterministic.
-const mockGet = jest.fn();
-jest.mock('config', () => ({
-  __esModule: true,
-  default: {
-    get: (key: string) => mockGet(key),
-  },
-}));
-
 // Mock the winston logger so we can assert on error/info calls without noise.
 const mockError = jest.fn();
 const mockInfo = jest.fn();
@@ -21,7 +12,6 @@ jest.mock('../src/utilities/logger.js', () => ({
 }));
 
 import {
-  Value,
   GenerateID,
   NotNull,
   ValidDate,
@@ -30,43 +20,8 @@ import {
 } from '../src/services/property.js';
 
 beforeEach(() => {
-  mockGet.mockReset();
   mockError.mockReset();
   mockInfo.mockReset();
-});
-
-describe('@Value', () => {
-  it('reads the value for the given key from config', () => {
-    mockGet.mockReturnValue('postgres://localhost');
-    class Db {
-      @Value('db.url')
-      url!: string;
-    }
-    expect(new Db().url).toBe('postgres://localhost');
-    expect(mockGet).toHaveBeenCalledWith('db.url');
-  });
-
-  it('falls back to the default when the key is missing', () => {
-    mockGet.mockImplementation(() => {
-      throw new Error('missing key');
-    });
-    class Db {
-      @Value('db.url', 'sqlite://memory')
-      url!: string;
-    }
-    expect(new Db().url).toBe('sqlite://memory');
-  });
-
-  it('allows the value to be overridden via the setter', () => {
-    mockGet.mockReturnValue('from-config');
-    class Db {
-      @Value('db.url')
-      url!: string;
-    }
-    const db = new Db();
-    db.url = 'overridden';
-    expect(db.url).toBe('overridden');
-  });
 });
 
 describe('@GenerateID', () => {

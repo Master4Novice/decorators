@@ -1,32 +1,9 @@
-import { readYMLKey } from '../utilities/read.js';
 import { logger } from '../utilities/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
-/***
- * Decorator can set a class property value from YAML file
- * @param ymlKey a key from yaml file.
- * @param ymlValue a default direct value.
- */
-export function Value(ymlKey: string, ymlValue?: any) {
-  return function (target: any, propertyKey: string) {
-    const ymlSymbol = Symbol('yml');
-    const getter = function (this: any) {
-      if (!this[ymlSymbol]) {
-        this[ymlSymbol] = readYMLKey(ymlKey, ymlValue);
-      }
-      return this[ymlSymbol];
-    };
-    const setter = function (this: any, value: string) {
-      this[ymlSymbol] = value;
-    };
-    Object.defineProperty(target, propertyKey, {
-      get: getter,
-      set: setter,
-      enumerable: true,
-      configurable: true,
-    });
-  };
-}
+// NOTE: `Value` and the config/value-injection family now live in
+// ./injection.ts (registry-backed, robust under `@Configured`). This module
+// keeps the utility/method decorators.
 
 /**
  * Decorator can set a class property as UUIDv4 value
