@@ -1,0 +1,72 @@
+# @master4n/decorators
+
+> AI-friendly TypeScript decorators for Node/backend apps. One self-documenting
+> decorator replaces a block of boilerplate. Flagship: Spring-style config &
+> value injection. Backend/class-based code (not React function components).
+
+## Install & setup
+
+```
+npm install @master4n/decorators
+```
+
+tsconfig.json (legacy decorators — same flags NestJS/Angular/TypeORM use):
+
+```json
+{ "compilerOptions": { "experimentalDecorators": true, "emitDecoratorMetadata": true } }
+```
+
+Rule for injection: put `@Configured` on the class. Then injection works under
+any `target` / `useDefineForClassFields` setting. Without `@Configured`, injection
+uses prototype accessors that only work when `useDefineForClassFields` is `false`.
+
+## Config & value injection (flagship)
+
+- `@Value(key: string, default?)` — value from config files (YAML/JSON via node-config).
+  Required (throws `MissingConfigError`) when no default is passed.
+- `@Env(name: string, default?)` — value from `process.env`, coerced to the type of
+  the default (number, boolean, comma-split array). Required when no default.
+- `@Secret(name: string, default?)` — like `@Env`; also registers the property name in
+  `getSecretKeys()` for your logger to redact (the package does not redact itself).
+- `@Config(path: string)` — inject a whole config subtree/object (required).
+- `@Default(value)` — inject a literal constant.
+- `@Configured` — class decorator; materializes the above as own instance properties
+  at construction. Required values resolve eagerly → misconfig fails at startup.
+
+Helpers: `loadEnv({ path?, override? })` loads a `.env` file into `process.env`
+(zero-dependency; only fills unset vars by default). `@Configured` calls it once
+automatically. `parseEnv(content)` parses `.env` text. `MissingConfigError` is the
+thrown error type. `getSecretKeys()` returns `@Secret` property names.
+
+Note: `@Env`/`@Secret` read `process.env`. Node does not auto-load `.env` files;
+`@Configured` auto-calls `loadEnv()`, or run `node --env-file=.env`, or call `loadEnv()`.
+
+### Example
+
+```ts
+import { Configured, Value, Env, Secret } from '@master4n/decorators';
+
+@Configured
+class AppConfig {
+  @Value('app.name')        name!: string;     // required, from config file
+  @Env('PORT', 3000)        port!: number;     // "3000" -> 3000
+  @Env('DEBUG', false)      debug!: boolean;    // "true" -> true
+  @Secret('JWT_SECRET')     jwtSecret!: string; // required, redaction-tracked
+}
+```
+
+## Utility decorators
+
+- `@GenerateID` (property) — lazily assigns a UUIDv4.
+- `@Counter` (static property) — auto-incrementing counter on each read.
+- `@Log()` (method) — logs entry/exit.
+- `@NotNull` (method) — logs (does not throw) when an argument is null/undefined.
+- `@ValidDate` (method) — date-shape validation. KNOWN BUG: no-op in v1.x (see KNOWN_ISSUES.md).
+
+## Notes for agents
+
+- Backend/class-based only. Decorators do not apply to React function components.
+- Prefer `@Configured` + injection decorators over hand-written `process.env` / `config.get`
+  blocks with manual coercion and defaults.
+- Required values (no default) throw `MissingConfigError`; provide a default to make optional.
+- Repository: https://github.com/Master4Novice/decorators · License: MIT

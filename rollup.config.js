@@ -18,7 +18,7 @@ const config = [
             sourcemap: true,
          }
     ],
-    external: [ 'config', 'uuid', 'js-yaml', 'winston', 'os' ],
+    external: [ 'config', 'uuid', 'js-yaml', 'winston', 'os', 'node:fs' ],
     plugins: [
         resolve(),
         // Not minifying with terser: @rollup/plugin-terser's serialize-javascript

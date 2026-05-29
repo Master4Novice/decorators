@@ -15,3 +15,4 @@ export {
   Counter,
   Log,
 } from './services/property.js';
+export { loadEnv, parseEnv } from './utilities/env.js';

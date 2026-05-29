@@ -1,4 +1,5 @@
 import config from 'config';
+import { ensureEnvLoaded } from '../utilities/env.js';
 
 /**
  * Thrown when a required configuration value is missing and no default was
@@ -247,6 +248,8 @@ export function Configured<T extends new (...args: any[]) => object>(
   const wrapped = class extends ctor {
     constructor(...args: any[]) {
       super(...args);
+      // Make `.env` files "just work" for @Env/@Secret (fills unset vars once).
+      ensureEnvLoaded();
       for (const { key, resolve } of collectSpecs(ctor.prototype)) {
         Object.defineProperty(this, key, {
           value: resolve(),
