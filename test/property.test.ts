@@ -18,6 +18,7 @@ import {
   Counter,
   Log,
 } from '../src/services/property.js';
+import { ValidationError } from '../src/services/errors.js';
 
 beforeEach(() => {
   mockError.mockReset();
@@ -60,31 +61,21 @@ describe('@NotNull', () => {
       }
     }
     expect(new Svc().greet('a')).toBe('hi a');
-    expect(mockError).not.toHaveBeenCalled();
   });
 
-  // NOTE: current behavior is "log, then still run" — it does NOT guard/throw.
-  // Pinned here intentionally; changing to throw is a Phase-3 decision.
-  it('logs an error for null/undefined args but still executes', () => {
+  it('throws ValidationError for null/undefined args (1.3.0: now throws)', () => {
     class Svc {
       @NotNull
       greet(name: string | null) {
         return `hi ${name}`;
       }
     }
-    expect(new Svc().greet(null)).toBe('hi null');
-    expect(mockError).toHaveBeenCalled();
+    expect(() => new Svc().greet(null)).toThrow(ValidationError);
   });
 });
 
 describe('@ValidDate', () => {
-  // KNOWN BUG (pinned, see KNOWN_ISSUES.md): @ValidDate assigns `target[key]`
-  // directly instead of returning/mutating the method descriptor. TypeScript's
-  // __decorate re-applies the original descriptor afterwards, clobbering the
-  // wrapper — so in published v1.x @ValidDate performs NO validation. These
-  // tests pin that real (no-op) behavior; fixing it is a Phase-3 change that
-  // requires sign-off because it alters published behavior.
-  it('does not throw and returns the original result for a valid date', () => {
+  it('runs and returns the result for a valid date', () => {
     class Svc {
       @ValidDate
       check(_d: { DD: string; MM: string; YYYY: string }) {
@@ -92,19 +83,28 @@ describe('@ValidDate', () => {
       }
     }
     expect(new Svc().check({ DD: '15', MM: '06', YYYY: '2024' })).toBe('ok');
-    expect(mockError).not.toHaveBeenCalled();
   });
 
-  it('currently does NOT validate: no error is logged even for an invalid date', () => {
+  it('throws ValidationError for an invalid date (1.3.0: bug fixed)', () => {
     class Svc {
       @ValidDate
       check(_d: { DD: string; MM: string; YYYY: string }) {
         return 'ran';
       }
     }
-    expect(new Svc().check({ DD: '32', MM: '13', YYYY: '2024' })).toBe('ran');
-    // No error logged — the decorator is a no-op in v1.x (known bug).
-    expect(mockError).not.toHaveBeenCalled();
+    expect(() => new Svc().check({ DD: '32', MM: '13', YYYY: '2024' })).toThrow(
+      ValidationError,
+    );
+  });
+
+  it('allows an undefined first argument', () => {
+    class Svc {
+      @ValidDate
+      check(_d?: { DD: string; MM: string; YYYY: string }) {
+        return 'ok';
+      }
+    }
+    expect(new Svc().check()).toBe('ok');
   });
 });
 

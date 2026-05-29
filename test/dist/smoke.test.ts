@@ -24,6 +24,15 @@ describe('built dist bundle', () => {
       'ValidDate',
       'Counter',
       'Log',
+      'ValidationError',
+      'ForbiddenError',
+      'Role',
+      'Authorize',
+      'setRoleResolver',
+      'Retry',
+      'Memoize',
+      'Deprecated',
+      'Measure',
     ]) {
       expect(typeof dec[name]).not.toBe('undefined');
     }

@@ -55,13 +55,27 @@ class AppConfig {
 }
 ```
 
+## Validation & access decorators (throw on invalid input)
+
+- `@NotNull` (method) — throws `ValidationError` if any argument is null/undefined.
+  (BREAKING in 2.0.0: 1.x only logged.)
+- `@ValidDate` (method) — throws `ValidationError` if the first arg is not a valid
+  `{ DD, MM, YYYY }` date (undefined is allowed). Fixed in 2.0.0 (was a no-op in 1.x).
+- `@Role(...roles: string[])` (method) — throws `ForbiddenError` unless the principal has
+  one of the roles. Configure via `setRoleResolver((ctx) => string[] | Promise<string[]>)`.
+- `@Authorize(predicate, message?)` (method) — throws `ForbiddenError` unless `predicate(ctx)`
+  is truthy. `ctx` is `{ instance, methodName, args }`. Predicate may be async.
+- Error types: `ValidationError`, `ForbiddenError`.
+
 ## Utility decorators
 
-- `@GenerateID` (property) — lazily assigns a UUIDv4.
+- `@GenerateID` (property) — lazily assigns a UUIDv4 (node:crypto.randomUUID).
 - `@Counter` (static property) — auto-incrementing counter on each read.
 - `@Log()` (method) — logs entry/exit.
-- `@NotNull` (method) — logs (does not throw) when an argument is null/undefined.
-- `@ValidDate` (method) — date-shape validation. KNOWN BUG: no-op in v1.x (see KNOWN_ISSUES.md).
+- `@Retry(attempts=3, { delayMs? })` (method) — retries on failure; sync and async.
+- `@Memoize` (method) — caches results by JSON of args, per instance.
+- `@Deprecated(message?)` (method) — logs a one-time deprecation warning.
+- `@Measure` (method) — logs execution time; sync and async.
 
 ## Notes for agents
 

@@ -1,5 +1,6 @@
 import { logger } from '../utilities/logger.js';
 import { randomUUID } from 'node:crypto';
+import { ValidationError } from './errors.js';
 
 // NOTE: `Value` and the config/value-injection family now live in
 // ./injection.ts (registry-backed, robust under `@Configured`). This module
@@ -28,7 +29,10 @@ export function GenerateID(target: any, key: string) {
 }
 
 /**
- * Decorator will allow defined and non null values only.
+ * Method decorator: rejects `null`/`undefined` arguments.
+ *
+ * Throws {@link ValidationError} naming the offending argument index. (As of
+ * 2.0.0 this throws; in 1.x it only logged. See KNOWN_ISSUES.md history.)
  */
 export function NotNull(
   target: any,
@@ -38,9 +42,13 @@ export function NotNull(
   const originalMethod = descriptor.value;
 
   descriptor.value = function (...args: any[]) {
-    args.forEach((arg) => {
+    args.forEach((arg, index) => {
       if (arg === null || arg === undefined) {
-        logger.error(`Error: Arguments must not be ${null} or ${undefined}`);
+        throw new ValidationError(
+          `@NotNull: argument at index ${index} of "${String(
+            key,
+          )}" must not be null or undefined.`,
+        );
       }
     });
 
@@ -51,22 +59,35 @@ export function NotNull(
 }
 
 /**
- * Decorator for date validation.
+ * Method decorator: validates that the first argument is a valid
+ * `{ DD, MM, YYYY }` date object. Throws {@link ValidationError} when it is
+ * present but invalid (an `undefined` first argument is allowed).
+ *
+ * Fixed in 2.0.0: previously a no-op because it reassigned `target[key]`
+ * instead of returning the descriptor (see KNOWN_ISSUES.md).
  */
-export function ValidDate(target: any, key: string | symbol) {
-  const originalMethod = target[key];
+export function ValidDate(
+  target: any,
+  key: string,
+  descriptor: PropertyDescriptor,
+) {
+  const originalMethod = descriptor.value;
 
-  target[key] = function (...args: any[]) {
+  descriptor.value = function (...args: any[]) {
     const dateParam = args[0];
 
-    if (!isValidDate(dateParam) && dateParam !== undefined) {
-      logger.error(
-        `Error: Invalid parameter at index ${0}. Property 'DD', 'MM', and 'YYYY' must represent a valid date.`,
+    if (dateParam !== undefined && !isValidDate(dateParam)) {
+      throw new ValidationError(
+        `@ValidDate: argument 0 of "${String(
+          key,
+        )}" must be a valid { DD, MM, YYYY } date.`,
       );
     }
 
     return originalMethod.apply(this, args);
   };
+
+  return descriptor;
 }
 
 function isValidDate(dateObj: any): boolean {

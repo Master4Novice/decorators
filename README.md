@@ -86,32 +86,68 @@ Missing required values throw `MissingConfigError`. With `@Configured`, that
 happens at construction — so misconfiguration fails at startup, not deep in a
 request. `getSecretKeys()` returns the names of `@Secret` fields for redaction.
 
-## Utility decorators
+## Validation & access (these throw)
 
-| Decorator     | Target          | Description                                            |
-| ------------- | --------------- | ------------------------------------------------------ |
-| `@GenerateID` | class property  | assigns a lazy UUIDv4 to the property.                 |
-| `@Counter`    | static property | turns a static property into an auto-incrementing counter. |
-| `@Log()`      | method          | logs entry/exit around the method.                     |
-| `@NotNull`    | method          | logs when an argument is `null`/`undefined`.           |
-| `@ValidDate`  | method          | date-shape validation. **See [Known Issues](./KNOWN_ISSUES.md).** |
+Guards throw on invalid input — misuse fails fast instead of slipping through.
+
+| Decorator                  | Target | Throws            | Description                                            |
+| -------------------------- | ------ | ----------------- | ------------------------------------------------------ |
+| `@NotNull`                 | method | `ValidationError` | rejects `null`/`undefined` arguments.                  |
+| `@ValidDate`               | method | `ValidationError` | first arg must be a valid `{ DD, MM, YYYY }` date.     |
+| `@Role(...roles)`          | method | `ForbiddenError`  | allows only if the principal has one of the roles.     |
+| `@Authorize(predicate)`    | method | `ForbiddenError`  | allows only if `predicate(ctx)` is truthy.             |
+
+`@Role`/`@Authorize` are auth-agnostic. Register how to find the principal once:
 
 ```ts
-import { GenerateID, Counter, Log } from '@master4n/decorators';
+import { Role, Authorize, setRoleResolver } from '@master4n/decorators';
+
+setRoleResolver((ctx) => (ctx.instance as any).user?.roles ?? []);
+
+class AdminApi {
+  @Role('admin', 'owner')
+  deleteUser(id: string) { /* ... */ }
+
+  @Authorize((ctx) => (ctx.instance as any).user?.can('billing'))
+  refund(orderId: string) { /* ... */ }
+}
+```
+
+Resolvers/predicates may be async (the guarded call then returns a promise).
+
+## Utility decorators
+
+| Decorator          | Target          | Description                                            |
+| ------------------ | --------------- | ------------------------------------------------------ |
+| `@GenerateID`      | class property  | assigns a lazy UUIDv4 (via `crypto.randomUUID()`).     |
+| `@Counter`         | static property | auto-incrementing counter on each read.                |
+| `@Log()`           | method          | logs entry/exit around the method.                     |
+| `@Retry(n, opts?)` | method          | retries on failure (sync/async); `opts.delayMs` for async. |
+| `@Memoize`         | method          | caches results by argument JSON, per instance.         |
+| `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
+| `@Measure`         | method          | logs execution time (sync/async).                      |
+
+```ts
+import { GenerateID, Counter, Log, Retry, Memoize } from '@master4n/decorators';
 
 class Job {
   @GenerateID id!: string;        // unique per instance
   @Counter static runs: number;   // increments on each read
 
+  @Retry(3, { delayMs: 200 })
   @Log()
-  run() { /* ... */ }
+  async run() { /* ... */ }
+
+  @Memoize
+  score(input: string): number { /* expensive, pure */ return input.length; }
 }
 ```
 
-## Known issues
+## Breaking change in 2.0.0
 
-See [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) — notably `@ValidDate` is currently a
-no-op in published v1.x, and `@NotNull` logs but does not throw.
+`@NotNull` now **throws** `ValidationError` for `null`/`undefined` arguments (it
+only logged in 1.x). `@ValidDate` is fixed (it was a no-op) and now throws on an
+invalid date. See [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) for the history.
 
 ## Credits
 
