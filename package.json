@@ -57,7 +57,7 @@
   "dependencies": {
     "config": "^3.3.9",
     "js-yaml": "^4.1.1",
-    "uuid": "^9.0.1",
+    "uuid": "^14.0.0",
     "winston": "^3.11.0"
   },
   "devDependencies": {
