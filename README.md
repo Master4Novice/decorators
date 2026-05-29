@@ -62,9 +62,14 @@ class DbConfig {
   @Value('db.url', 'sqlite://memory') url!: string;
   @Env('DB_PORT', 5432)               port!: number;   // "5432" -> 5432
   @Env('DB_SSL', false)               ssl!: boolean;    // "true" -> true
-  @Secret('DB_PASSWORD')              password!: string; // required + redaction-aware
+  @Secret('DB_PASSWORD')              password!: string; // required; tracked for redaction
 }
 ```
+
+> **Sources:** `@Value`/`@Config` read YAML/JSON via [`node-config`]; `@Env`/`@Secret`
+> read `process.env`. Node does **not** load `.env` files automatically — if you keep
+> config in a `.env` file, load it first (`node --env-file=.env ...` or the `dotenv`
+> package) so the variables are present in `process.env`.
 
 ### Injection decorators
 
@@ -72,7 +77,7 @@ class DbConfig {
 | ------------------------ | ------------------------------- | ---------------------------------------------------------------- |
 | `@Value(key, default?)`  | config files (YAML/JSON)        | via [`node-config`]. Required (throws) when no default is given. |
 | `@Env(name, default?)`   | `process.env`                   | coerces to the default's type (number/boolean/array).            |
-| `@Secret(name, default?)`| `process.env`                   | like `@Env`; registers the field for log redaction.              |
+| `@Secret(name, default?)`| `process.env`                   | like `@Env`; registers the field name via `getSecretKeys()` so you can wire it into your logger's redaction (the package does not redact for you yet). |
 | `@Config(path)`          | config files                    | injects a whole config subtree/object (required).                |
 | `@Default(value)`        | literal                         | injects a constant.                                              |
 | `@Configured`            | _class decorator_               | materializes the above as own instance props (robust mode).      |
