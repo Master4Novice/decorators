@@ -1,8 +1,11 @@
 # @master4n/decorators
 
-![Owner Badge](https://img.shields.io/badge/Owner-Master4Novice-orange?style=flat)
-![Package License](https://img.shields.io/npm/l/%40master4n%2Fdecorators)
-![Package Downloads](https://img.shields.io/npm/dm/%40master4n%2Fdecorators)
+[![CI](https://github.com/Master4Novice/decorators/actions/workflows/ci.yml/badge.svg)](https://github.com/Master4Novice/decorators/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/%40master4n%2Fdecorators)](https://www.npmjs.com/package/@master4n/decorators)
+![npm downloads](https://img.shields.io/npm/dm/%40master4n%2Fdecorators)
+![License](https://img.shields.io/npm/l/%40master4n%2Fdecorators)
+![Types](https://img.shields.io/npm/types/%40master4n%2Fdecorators)
+![Owner](https://img.shields.io/badge/Owner-Master4Novice-orange?style=flat)
 
 **AI-friendly TypeScript decorators for Node/backend apps.** One self-documenting
 decorator replaces a block of boilerplate — Spring-style config & value injection,
@@ -171,6 +174,10 @@ class Job {
 `@NotNull` now **throws** `ValidationError` for `null`/`undefined` arguments (it
 only logged in 1.x). `@ValidDate` is fixed (it was a no-op) and now throws on an
 invalid date. See [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) for the history.
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Credits
 
