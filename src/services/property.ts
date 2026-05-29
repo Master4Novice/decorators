@@ -1,5 +1,5 @@
 import { logger } from '../utilities/logger.js';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 // NOTE: `Value` and the config/value-injection family now live in
 // ./injection.ts (registry-backed, robust under `@Configured`). This module
@@ -12,7 +12,7 @@ export function GenerateID(target: any, key: string) {
   const uuidSymbol = Symbol('uuid');
   const getter = function (this: any) {
     if (!this[uuidSymbol]) {
-      this[uuidSymbol] = uuidv4();
+      this[uuidSymbol] = randomUUID();
     }
     return this[uuidSymbol];
   };
