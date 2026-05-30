@@ -16,7 +16,25 @@ export {
   Log,
 } from './services/property.js';
 export type { LogOptions } from './services/property.js';
-export { ValidationError, ForbiddenError } from './services/errors.js';
+export {
+  ValidationError,
+  ForbiddenError,
+  TimeoutError,
+  RateLimitError,
+  CircuitOpenError,
+} from './services/errors.js';
+export {
+  Timeout,
+  Once,
+  Cache,
+  Dedupe,
+  Fallback,
+  RateLimit,
+  Concurrency,
+  CircuitBreaker,
+  Debounce,
+  Throttle,
+} from './services/resilience.js';
 export { Pattern } from './services/pattern.js';
 export type { PatternOptions } from './services/pattern.js';
 export { Min, Max, Range } from './services/constraints.js';

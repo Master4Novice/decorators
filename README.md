@@ -188,6 +188,33 @@ class Account {
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
+## Resilience & control flow (method decorators)
+
+| Decorator                  | Description                                                        |
+| -------------------------- | ----------------------------------------------------------------- |
+| `@Timeout(ms)`             | reject an **async** method with `TimeoutError` if it exceeds `ms`. |
+| `@Once`                    | run once per instance; cache that result forever.                 |
+| `@Cache(ttlMs)`            | memoize with a TTL (vs `@Memoize`, which never expires).          |
+| `@Dedupe`                  | coalesce concurrent identical **async** calls (single-flight).    |
+| `@Fallback(value\|fn)`     | on error, return a fallback instead of throwing (sync/async).     |
+| `@RateLimit(limit, ms)`    | throw `RateLimitError` past `limit` calls per rolling `ms`.        |
+| `@Concurrency(max)`        | cap concurrent **async** executions; queue the rest.              |
+| `@CircuitBreaker(opts)`    | open after N failures, fast-fail with `CircuitOpenError`, auto-reset. |
+| `@Debounce(ms)`            | **void** methods: collapse rapid calls, run on the trailing edge. |
+| `@Throttle(ms)`            | **void** methods: run on the leading edge, ignore for `ms`.       |
+
+```ts
+import { Timeout, Retry, CircuitBreaker, Fallback } from '@master4n/decorators';
+
+class Upstream {
+  @CircuitBreaker({ failureThreshold: 5, resetMs: 30_000 })
+  @Retry(3, { delayMs: 200 })
+  @Timeout(5_000)
+  @Fallback(null)               // last resort: return null instead of throwing
+  async fetchUser(id: string) { /* ... */ }
+}
+```
+
 ```ts
 import { GenerateID, Counter, Log, Retry, Memoize } from '@master4n/decorators';
 

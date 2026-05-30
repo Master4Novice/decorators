@@ -93,9 +93,24 @@ class AppConfig {
   arguments, `{ result?: boolean }` logs the redacted return value, `{ level? }` sets the log
   level, `{ redact? }` passes RedactOptions. Args/result are masked via `redact()`. Async-aware.
 - `@Retry(attempts=3, { delayMs? })` (method) — retries on failure; sync and async.
-- `@Memoize` (method) — caches results by JSON of args, per instance.
+- `@Memoize` (method) — caches results by JSON of args, per instance (never expires).
 - `@Deprecated(message?)` (method) — logs a one-time deprecation warning.
 - `@Measure` (method) — logs execution time; sync and async.
+
+## Resilience & control flow (method decorators)
+
+- `@Timeout(ms, { message? })` — async only; rejects with `TimeoutError` if not settled in ms.
+- `@Once` — run once per instance; cache result forever (args ignored).
+- `@Cache(ttlMs)` — memoize per instance keyed by args, expiring after ttlMs.
+- `@Dedupe` — single-flight: identical concurrent async calls share one promise.
+- `@Fallback(valueOrFn)` — on sync throw / async reject, return the fallback (fn gets the error).
+- `@RateLimit(limit, intervalMs)` — throws/rejects `RateLimitError` past limit calls per window.
+- `@Concurrency(max)` — cap concurrent async executions per instance; queue the rest (returns promise).
+- `@CircuitBreaker({ failureThreshold=5, resetMs=30000 })` — open after N failures; fast-fail with
+  `CircuitOpenError`; half-open trial after resetMs.
+- `@Debounce(ms)` — void/fire-and-forget methods only; trailing-edge.
+- `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
+- Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
 
 ## Notes for agents
 
