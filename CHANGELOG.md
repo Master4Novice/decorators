@@ -4,6 +4,25 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] — 2026-05-30
+
+### Added
+
+- **Express REST controllers — Spring-MVC-style** (a routing layer on top of
+  Express, with no `express` runtime dependency):
+  - Class: `@Controller(basePath?)` / `@RestController`.
+  - Methods: `@Get` `@Post` `@Put` `@Patch` `@Delete` `@Options` `@Head` `@All`
+    (+ `@GetMapping`…`@DeleteMapping`, `@RequestMapping(path, method?)`).
+  - Parameter decorators (only possible because we use legacy decorators):
+    `@Param`/`@PathVariable`, `@Query`/`@RequestParam`, `@Body`/`@RequestBody`,
+    `@Header`/`@RequestHeader`, `@Cookie`, `@Req`, `@Res`, `@Next`.
+  - Modifiers: `@HttpCode`/`@ResponseStatus`, `@ContentType`/`@Produces`,
+    `@Redirect`, `@Use(...middleware)` (class- or method-level).
+  - `registerControllers(app, controllers)` wires it into any Express-compatible
+    app/router. Returned values are sent as JSON with the status; thrown errors
+    go to `next(err)`; `@Res()` hands the response to your method. Types:
+    `HttpRequest`, `HttpResponse`, `HttpApp`, `RequestHandler`.
+
 ## [2.8.0] — 2026-05-30
 
 ### Added
@@ -175,6 +194,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.9.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.9.0
 [2.8.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.8.0
 [2.7.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.7.0
 [2.6.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.6.0

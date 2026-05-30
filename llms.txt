@@ -124,6 +124,23 @@ class AppConfig {
 - `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
 - Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
 
+## Express REST controllers (Spring-style; legacy decorators required)
+
+Declarative Express routing. Decorate a class + methods + parameters, then call
+`registerControllers(app, [controllerInstanceOrClass, ...])`. No express runtime dependency
+(structural HttpApp/HttpRequest/HttpResponse types). Returned values -> res.json/send with the
+status; thrown errors -> next(err); inject `@Res()` to own the response.
+
+- Class: `@Controller(basePath='')` (alias `@RestController`).
+- Methods: `@Get/@Post/@Put/@Patch/@Delete/@Options/@Head/@All(path='/')`
+  (aliases `@GetMapping`…; `@RequestMapping(path, method?)`).
+- Params (parameter decorators): `@Param(name?)`=`@PathVariable`, `@Query(name?)`=`@RequestParam`,
+  `@Body(name?)`=`@RequestBody`, `@Header(name?)`=`@RequestHeader`, `@Cookie(name?)`,
+  `@Req()`, `@Res()`, `@Next()`.
+- Modifiers: `@HttpCode(code)`=`@ResponseStatus`, `@ContentType(t)`=`@Produces`,
+  `@Redirect(url, status=302)`, `@Use(...middleware)` (class-level = all routes, method-level = one route).
+- Wiring: `registerControllers(app, controllers)`. Types: HttpRequest, HttpResponse, HttpApp, RequestHandler.
+
 ## AI tools (the agent loop)
 
 - `@Tool({ description, name?, parameters? })` (method) — register a method as an LLM-callable

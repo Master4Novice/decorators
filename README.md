@@ -219,6 +219,55 @@ class Account {
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
+## Express REST controllers (Spring-style)
+
+Build Express routes the way Java/Spring does — `@Controller` + `@GetMapping` +
+`@PathVariable`/`@RequestParam`/`@RequestBody` — then wire them in with
+`registerControllers`. Framework-agnostic (no `express` dependency); works with
+any Express-compatible `app`/`Router`.
+
+```ts
+import express from 'express';
+import {
+  Controller, Get, Post, Param, Query, Body, HttpCode, Use, registerControllers,
+} from '@master4n/decorators';
+
+@Use(authMiddleware)            // controller-level middleware
+@Controller('/users')
+class UserController {
+  @Get('/:id')
+  getUser(@Param('id') id: string, @Query('expand') expand?: string) {
+    return this.service.find(id, expand);   // returned value -> res.json(...) (200)
+  }
+
+  @Post('/')
+  @HttpCode(201)
+  create(@Body() dto: CreateUserDto) {
+    return this.service.create(dto);          // -> 201 + JSON
+  }
+}
+
+const app = express();
+app.use(express.json());
+registerControllers(app, [new UserController()]);
+```
+
+Returned values are sent as JSON with the configured status; throw and it's
+routed to `next(err)`. Inject `@Res()` to take over the response yourself.
+
+| Concise            | Spring alias        | Purpose                                   |
+| ------------------ | ------------------- | ----------------------------------------- |
+| `@Controller(base)`| `@RestController`   | class: base path + controller middleware. |
+| `@Get` `@Post` `@Put` `@Patch` `@Delete` `@Options` `@Head` `@All` | `@GetMapping` … `@RequestMapping` | route a method. |
+| `@Param(n)`        | `@PathVariable`     | path variable.                            |
+| `@Query(n)`        | `@RequestParam`     | query-string value.                       |
+| `@Body(n?)`        | `@RequestBody`      | request body (or one field).              |
+| `@Header(n)`       | `@RequestHeader`    | request header.                           |
+| `@Cookie(n)` `@Req()` `@Res()` `@Next()` | — | cookie / raw req / res / next.    |
+| `@HttpCode(code)`  | `@ResponseStatus`   | success status code.                      |
+| `@ContentType(t)`  | `@Produces`         | response content-type.                    |
+| `@Redirect(url)` `@Use(...mw)` | —       | redirect / attach middleware (class or route). |
+
 ## AI tools
 
 Expose class methods as LLM-callable tools, then dispatch the model's tool call
