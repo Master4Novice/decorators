@@ -14,10 +14,14 @@ export class MissingConfigError extends Error {
   }
 }
 
-/** A single field's injection rule: which property, and how to resolve it. */
+/**
+ * A single field's instance rule: which property, and how to install it on a
+ * fresh instance. `@Value`/`@Env`/... install a resolved value; `@Pattern`
+ * installs a validating accessor.
+ */
 interface InjectionSpec {
   key: string | symbol;
-  resolve: () => unknown;
+  materialize: (instance: object) => void;
 }
 
 /** Registry of injection specs, keyed by the class prototype that declared them. */
@@ -38,6 +42,31 @@ function register(proto: object, spec: InjectionSpec): void {
   } else {
     registry.set(proto, [spec]);
   }
+}
+
+/**
+ * Register a property to be materialized on each instance by `@Configured`.
+ * Used by property decorators outside this module (e.g. `@Pattern`) so they are
+ * robust under `useDefineForClassFields: true` instead of being shadowed.
+ */
+export function registerInstanceSpec(
+  proto: object,
+  key: string | symbol,
+  materialize: (instance: object) => void,
+): void {
+  register(proto, { key, materialize });
+}
+
+/** Build a materializer that installs a resolved value as an own data property. */
+function valueMaterializer(key: string | symbol, resolve: () => unknown) {
+  return (instance: object) => {
+    Object.defineProperty(instance, key, {
+      value: resolve(),
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  };
 }
 
 /** Walk the prototype chain so subclasses inherit base-class injection specs. */
@@ -101,7 +130,10 @@ function coerce(raw: unknown, sample: unknown): unknown {
 
 function makeDecorator(resolve: () => unknown) {
   return function (target: object, propertyKey: string | symbol): void {
-    register(target, { key: propertyKey, resolve });
+    register(target, {
+      key: propertyKey,
+      materialize: valueMaterializer(propertyKey, resolve),
+    });
     definePrototypeAccessor(target, propertyKey, resolve);
   };
 }
@@ -193,7 +225,10 @@ export function Secret(name: string, fallback?: unknown) {
       }
       return raw;
     };
-    register(target, { key: propertyKey, resolve });
+    register(target, {
+      key: propertyKey,
+      materialize: valueMaterializer(propertyKey, resolve),
+    });
     definePrototypeAccessor(target, propertyKey, resolve);
   };
 }
@@ -252,13 +287,8 @@ export function Configured<T extends new (...args: any[]) => object>(
       super(...args);
       // Make `.env` files "just work" for @Env/@Secret (fills unset vars once).
       ensureEnvLoaded();
-      for (const { key, resolve } of collectSpecs(ctor.prototype)) {
-        Object.defineProperty(this, key, {
-          value: resolve(),
-          writable: true,
-          enumerable: true,
-          configurable: true,
-        });
+      for (const spec of collectSpecs(ctor.prototype)) {
+        spec.materialize(this);
       }
     }
   };

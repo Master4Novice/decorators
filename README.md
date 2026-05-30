@@ -118,8 +118,9 @@ Guards throw on invalid input — misuse fails fast instead of slipping through.
 
 | Decorator                  | Target | Throws            | Description                                            |
 | -------------------------- | ------ | ----------------- | ------------------------------------------------------ |
-| `@NotNull`                 | method | `ValidationError` | rejects `null`/`undefined` arguments.                  |
-| `@ValidDate`               | method | `ValidationError` | first arg must be a valid `{ DD, MM, YYYY }` date.     |
+| `@NotNull`                 | method   | `ValidationError` | rejects `null`/`undefined` arguments.                |
+| `@ValidDate`               | method   | `ValidationError` | first arg must be a valid `{ DD, MM, YYYY }` date.   |
+| `@Pattern(regex, opts?)`   | property | `ValidationError` | only allows assigning values that match the regex.   |
 | `@Role(...roles)`          | method | `ForbiddenError`  | allows only if the principal has one of the roles.     |
 | `@Authorize(predicate)`    | method | `ForbiddenError`  | allows only if `predicate(ctx)` is truthy.             |
 
@@ -140,6 +141,25 @@ class AdminApi {
 ```
 
 Resolvers/predicates may be async (the guarded call then returns a promise).
+
+`@Pattern` guards a **property**: assignments that don't match the regex throw and
+the previous value is kept. Add `@Configured` so it works under any
+`useDefineForClassFields` setting (like the injection decorators).
+
+```ts
+import { Configured, Pattern } from '@master4n/decorators';
+
+@Configured
+class User {
+  @Pattern(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'invalid email' })
+  email!: string;
+
+  @Pattern(/^\d{6}$/, { coerce: true }) // accepts 560001 or "560001"
+  pincode!: string;
+}
+
+new User().email = 'not-an-email'; // throws ValidationError
+```
 
 ## Utility decorators
 

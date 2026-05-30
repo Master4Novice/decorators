@@ -26,6 +26,7 @@ describe('built dist bundle', () => {
       'Log',
       'ValidationError',
       'ForbiddenError',
+      'Pattern',
       'Role',
       'Authorize',
       'setRoleResolver',

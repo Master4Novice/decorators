@@ -4,6 +4,25 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] — 2026-05-30
+
+### Added
+
+- `@Pattern(regex, options?)` property decorator — only allows assigning values
+  that match the regex; a non-matching assignment throws `ValidationError` and
+  the property keeps its previous value. `null`/`undefined` are allowed;
+  `{ coerce: true }` tests `String(value)`; `{ message }` customizes the error.
+  Works standalone (`useDefineForClassFields: false`) and, with `@Configured`,
+  under both settings — including re-validating values set in the constructor.
+  `PatternOptions` type exported.
+
+### Changed
+
+- Internal: `@Configured`'s registry now materializes generic per-instance specs
+  (`registerInstanceSpec`), so property decorators beyond value injection can be
+  robust under modern class-field semantics. No public behavior change for
+  existing decorators.
+
 ## [2.2.0] — 2026-05-30
 
 ### Added
@@ -87,6 +106,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.3.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.0.0

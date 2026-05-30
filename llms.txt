@@ -71,6 +71,10 @@ class AppConfig {
   (BREAKING in 2.0.0: 1.x only logged.)
 - `@ValidDate` (method) — throws `ValidationError` if the first arg is not a valid
   `{ DD, MM, YYYY }` date (undefined is allowed). Fixed in 2.0.0 (was a no-op in 1.x).
+- `@Pattern(regex, { message?, coerce? })` (property) — only allows assigning values matching
+  the regex; a non-matching assignment throws `ValidationError` and keeps the old value.
+  null/undefined allowed. `coerce: true` tests `String(value)`. Use with `@Configured` for
+  robustness under useDefineForClassFields: true.
 - `@Role(...roles: string[])` (method) — throws `ForbiddenError` unless the principal has
   one of the roles. Configure via `setRoleResolver((ctx) => string[] | Promise<string[]>)`.
 - `@Authorize(predicate, message?)` (method) — throws `ForbiddenError` unless `predicate(ctx)`

@@ -17,6 +17,8 @@ export {
 } from './services/property.js';
 export type { LogOptions } from './services/property.js';
 export { ValidationError, ForbiddenError } from './services/errors.js';
+export { Pattern } from './services/pattern.js';
+export type { PatternOptions } from './services/pattern.js';
 export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';
 export { Retry, Memoize, Deprecated, Measure } from './services/utility.js';
