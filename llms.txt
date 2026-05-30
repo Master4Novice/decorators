@@ -124,6 +124,20 @@ class AppConfig {
 - `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
 - Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
 
+## Data-class decorators (Lombok-style)
+
+- `@ToString({ only?, exclude?, redact? })` (class) — adds toString(); redacts @Secret/sensitive
+  fields (more than Lombok).
+- `@Equals(...keys?)` (class) — adds equals(other); same-constructor, field-wise ===.
+- `@With` (class) — adds with(patch) -> shallow copy with overrides; preserves frozen-ness.
+- `@Data` (class) — @ToString + equals() + with().
+- `@Immutable` (class) — Object.freeze each instance (Lombok @Value). Don't combine with
+  @Configured (freeze blocks post-construction mutation).
+- `@Readonly` (field) — assignable once then throws ValidationError (like final).
+- `@Synchronized` (method) — serialize concurrent async calls per instance (mutex; returns promise).
+- `@Builder` (class) adds a runtime static builder(); `builder(Class)` is the typed standalone
+  fluent builder: builder(User).name('a').age(5).build(). Types: ToStringOptions, BuilderOf<T>.
+
 ## Express REST controllers (Spring-style; legacy decorators required)
 
 Declarative Express routing. Decorate a class + methods + parameters, then call

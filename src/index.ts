@@ -109,6 +109,18 @@ export type {
   HttpApp,
   RequestHandler,
 } from './services/rest.js';
+export {
+  ToString,
+  Equals,
+  With,
+  Data,
+  Immutable,
+  Readonly,
+  Synchronized,
+  Builder,
+  builder,
+} from './services/lombok.js';
+export type { ToStringOptions, BuilderOf } from './services/lombok.js';
 export { Tool, getTools, invokeTool, clearTools } from './services/ai.js';
 export type {
   ToolOptions,

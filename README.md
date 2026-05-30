@@ -219,6 +219,31 @@ class Account {
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
+## Data classes (Lombok-style, but better)
+
+| Decorator        | Adds                                                                      |
+| ---------------- | ------------------------------------------------------------------------- |
+| `@ToString(opts?)` | a `toString()` listing fields — **with `@Secret`/sensitive fields redacted** (Lombok doesn't). `only`/`exclude` options. |
+| `@Equals(...keys?)`| an `equals(other)` (same-constructor, field-wise).                      |
+| `@With`          | `with(patch)` → shallow copy with overrides (frozen-preserving).          |
+| `@Data`          | `@ToString` + `equals()` + `with()` in one.                               |
+| `@Immutable`     | `Object.freeze` each instance (Lombok `@Value`). Pairs with `@With`.      |
+| `@Readonly`      | field: assignable once, then throws (like `final`).                       |
+| `@Synchronized`  | method: serialize concurrent async calls per instance (mutex).            |
+| `@Builder` / `builder(Class)` | fluent builder. `builder()` is **fully typed** (no codegen). |
+
+```ts
+import { Data, Immutable, With, builder } from '@master4n/decorators';
+
+@Immutable
+@Data                                   // toString + equals + with
+class Money { constructor(public amount = 0, public currency = 'INR') {} }
+
+const a = new Money(100, 'INR');
+const b = (a as any).with({ amount: 250 });   // frozen copy
+const c = builder(Money).amount(50).currency('USD').build(); // typed builder
+```
+
 ## Express REST controllers (Spring-style)
 
 Build Express routes the way Java/Spring does — `@Controller` + `@GetMapping` +
