@@ -55,6 +55,20 @@ export {
   Integer,
   Positive,
 } from './services/format-validators.js';
+export {
+  NotBlank,
+  Size,
+  Negative,
+  PositiveOrZero,
+  NegativeOrZero,
+  Past,
+  Future,
+  PastOrPresent,
+  FutureOrPresent,
+  AssertTrue,
+  AssertFalse,
+  Digits,
+} from './services/bean-validators.js';
 export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';
 export { Retry, Memoize, Deprecated, Measure } from './services/utility.js';

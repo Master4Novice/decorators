@@ -83,6 +83,10 @@ class AppConfig {
 - `@Enum(values, { message? })` (property) — value must be one of `values`.
 - `@NonEmpty({ message? })` (property) — rejects null/undefined/''/[] (implies presence).
 - `@Integer()`, `@Positive()` (property) — number must be an integer / > 0.
+- Jakarta Bean-Validation-style (property; skip null/undefined except @NotBlank): `@NotBlank()`,
+  `@Size(min, max)`, `@Negative()`, `@PositiveOrZero()`, `@NegativeOrZero()`, `@Past()`,
+  `@Future()`, `@PastOrPresent()`, `@FutureOrPresent()`, `@AssertTrue()`, `@AssertFalse()`,
+  `@Digits(integer, fraction)`. All take an optional `{ message }` and compose with the others.
 
 ## Transform decorators (property; normalize value on assignment, before validators)
 

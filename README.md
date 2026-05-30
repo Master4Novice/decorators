@@ -136,6 +136,12 @@ Guards throw on invalid input — misuse fails fast instead of slipping through.
 | `@Enum(values)`            | property | `ValidationError` | value must be one of `values`.                       |
 | `@NonEmpty`                | property | `ValidationError` | rejects `null`/`undefined`/`''`/`[]`.                |
 | `@Integer` `@Positive`     | property | `ValidationError` | number must be an integer / greater than zero.       |
+| `@NotBlank`                | property | `ValidationError` | string with a non-whitespace char (asserts presence). |
+| `@Size(min, max)`          | property | `ValidationError` | string/array length bounds (Jakarta `@Size`).        |
+| `@Negative` `@PositiveOrZero` `@NegativeOrZero` | property | `ValidationError` | number sign constraints. |
+| `@Past` `@Future` `@PastOrPresent` `@FutureOrPresent` | property | `ValidationError` | date is before/after now. |
+| `@AssertTrue` `@AssertFalse` | property | `ValidationError` | boolean must be true / false.                      |
+| `@Digits(int, frac)`       | property | `ValidationError` | max integer + fractional digits (Jakarta `@Digits`). |
 
 **Transforms** normalize the value on assignment (and run *before* validators,
 whatever the stacking order):
