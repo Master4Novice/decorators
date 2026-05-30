@@ -123,6 +123,28 @@ Guards throw on invalid input — misuse fails fast instead of slipping through.
 | `@Pattern(regex, opts?)`   | property | `ValidationError` | only allows assigning values that match the regex.   |
 | `@Min(n)` / `@Max(n)`      | property | `ValidationError` | string/array **length** ≥ n / ≤ n, or **number** value. |
 | `@Range(min, max)`         | property | `ValidationError` | inclusive bounds on string/array length or number value. |
+| `@Email` `@URL` `@UUID`    | property | `ValidationError` | format checks for email / URL / UUID.                |
+| `@Enum(values)`            | property | `ValidationError` | value must be one of `values`.                       |
+| `@NonEmpty`                | property | `ValidationError` | rejects `null`/`undefined`/`''`/`[]`.                |
+| `@Integer` `@Positive`     | property | `ValidationError` | number must be an integer / greater than zero.       |
+
+**Transforms** normalize the value on assignment (and run *before* validators,
+whatever the stacking order):
+
+| Decorator       | Effect                                            |
+| --------------- | ------------------------------------------------- |
+| `@Trim`         | trim whitespace from assigned strings.            |
+| `@Lowercase` / `@Uppercase` | change case of assigned strings.      |
+| `@Coerce(type)` | coerce to `'number'`/`'boolean'`/`'string'`.      |
+| `@Clamp(min, max)` | clamp an assigned number into `[min, max]`.    |
+
+```ts
+@Configured
+class Signup {
+  @Trim @Lowercase @Email()       email!: string;  // "  A@B.CO " -> "a@b.co", validated
+  @Coerce('number') @Range(18, 120) age!: number;  // "21" -> 21, bounded
+}
+```
 | `@Role(...roles)`          | method | `ForbiddenError`  | allows only if the principal has one of the roles.     |
 | `@Authorize(predicate)`    | method | `ForbiddenError`  | allows only if `predicate(ctx)` is truthy.             |
 

@@ -39,6 +39,22 @@ export { Pattern } from './services/pattern.js';
 export type { PatternOptions } from './services/pattern.js';
 export { Min, Max, Range } from './services/constraints.js';
 export type { ConstraintOptions } from './services/constraints.js';
+export {
+  Trim,
+  Lowercase,
+  Uppercase,
+  Coerce,
+  Clamp,
+} from './services/transform.js';
+export {
+  Email,
+  URL,
+  UUID,
+  Enum,
+  NonEmpty,
+  Integer,
+  Positive,
+} from './services/format-validators.js';
 export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';
 export { Retry, Memoize, Deprecated, Measure } from './services/utility.js';

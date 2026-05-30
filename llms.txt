@@ -79,6 +79,18 @@ class AppConfig {
   reject out-of-bounds assignments (throw `ValidationError`). Polymorphic: compares a number's
   value, or a string/array's length. null/undefined allowed. Compose with each other and
   `@Pattern` on the same property. Use with `@Configured` for modern class-field robustness.
+- `@Email()`, `@URL()`, `@UUID()` (property) — format validation; throw `ValidationError`.
+- `@Enum(values, { message? })` (property) — value must be one of `values`.
+- `@NonEmpty({ message? })` (property) — rejects null/undefined/''/[] (implies presence).
+- `@Integer()`, `@Positive()` (property) — number must be an integer / > 0.
+
+## Transform decorators (property; normalize value on assignment, before validators)
+
+- `@Trim`, `@Lowercase`, `@Uppercase` — string normalization (non-strings pass through).
+- `@Coerce('number'|'boolean'|'string')` — coerce assigned value to the type.
+- `@Clamp(min, max)` — clamp an assigned number into [min, max].
+- Transforms always run before validators regardless of decorator stacking order. Compose with
+  `@Pattern`/`@Min`/`@Email`/etc. on the same property. Use `@Configured` for modern robustness.
 - `@Role(...roles: string[])` (method) — throws `ForbiddenError` unless the principal has
   one of the roles. Configure via `setRoleResolver((ctx) => string[] | Promise<string[]>)`.
 - `@Authorize(predicate, message?)` (method) — throws `ForbiddenError` unless `predicate(ctx)`

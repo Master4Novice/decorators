@@ -4,6 +4,22 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] — 2026-05-30
+
+### Added
+
+- **Transform decorators** (normalize on assign): `@Trim`, `@Lowercase`,
+  `@Uppercase`, `@Coerce('number'|'boolean'|'string')`, `@Clamp(min, max)`.
+- **Format/value validators**: `@Email`, `@URL`, `@UUID`, `@Enum(values)`,
+  `@NonEmpty`, `@Integer`, `@Positive`.
+
+### Changed
+
+- The property interceptor chain now distinguishes **transform** and **validate**
+  phases: all transforms run before all validators regardless of decorator
+  stacking order (so `@Trim @Min(3)` checks the trimmed length either way). No
+  behavior change for existing validators.
+
 ## [2.5.0] — 2026-05-30
 
 ### Added
@@ -137,6 +153,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.6.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.5.0
 [2.4.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.4.0
 [2.3.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.3.0
