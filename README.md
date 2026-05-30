@@ -101,6 +101,11 @@ request.
 - `redactFormat(options?)` is a winston format. This package's own logger already
   uses it; add it to your logger's `format.combine(...)` to protect your logs too.
 
+> **Redaction is key-based** — it masks object *fields* whose **name** is
+> sensitive. It cannot mask a secret passed as a positional **primitive**
+> (e.g. `login(rawToken)`) or one embedded in an error message/stack. Pass
+> secrets as named object fields, and don't put them in error messages.
+
 ```ts
 import { redact, redactFormat } from '@master4n/decorators';
 import winston from 'winston';

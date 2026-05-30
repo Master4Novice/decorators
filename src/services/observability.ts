@@ -41,6 +41,12 @@ export interface TraceOptions {
  * }
  * // [3f9a1c2b] -> handle args=[...]
  * // [3f9a1c2b] <- handle (12ms) result=...
+ *
+ * @remarks Redaction is **key-based**: object fields named like secrets
+ * (`@Secret` names + {@link DEFAULT_SENSITIVE_KEYS}) are masked. Positional
+ * **primitive** arguments (e.g. a raw token string) and **error messages** are
+ * logged as-is — do not pass raw secrets positionally, and avoid embedding them
+ * in thrown error messages. Set `args: false` to omit argument logging entirely.
  */
 export function Trace(options: TraceOptions = {}) {
   const logArgs = options.args ?? true;
@@ -139,6 +145,9 @@ export function setAuditResolver(resolver: AuditResolver): void {
  *   \@Audit('user.delete')
  *   deleteUser(id: string) { ... }
  * }
+ *
+ * @remarks Argument redaction is key-based (object fields only); positional
+ * primitive arguments are logged as-is — don't pass raw secrets positionally.
  */
 export function Audit(action?: string, options: { redact?: RedactOptions } = {}) {
   return function (
@@ -168,6 +177,10 @@ export function Audit(action?: string, options: { redact?: RedactOptions } = {})
  * Method decorator: log errors (with redacted args and the stack) and **rethrow**
  * — observability without swallowing. Handles sync and async. Pair with
  * `@Fallback` if you also want to recover.
+ *
+ * @remarks Argument redaction is key-based (object fields only). The error
+ * **stack/message is logged as-is** (its diagnostic value depends on it) — if
+ * your code may put secrets in error messages, scrub them at the throw site.
  */
 export function LogErrors(options: { redact?: RedactOptions } = {}) {
   return function (

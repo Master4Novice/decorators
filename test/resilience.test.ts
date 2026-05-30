@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import {
   Timeout,
   Once,
@@ -19,11 +20,12 @@ import {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 describe('@Timeout', () => {
+  // Generous margins (real timers) so this never flakes under CI load.
   it('rejects a slow async method with TimeoutError', async () => {
     class Api {
-      @Timeout(20)
+      @Timeout(30)
       async slow() {
-        await sleep(80);
+        await sleep(300);
         return 'done';
       }
     }
@@ -32,9 +34,9 @@ describe('@Timeout', () => {
 
   it('resolves a fast async method normally', async () => {
     class Api {
-      @Timeout(80)
+      @Timeout(300)
       async fast() {
-        await sleep(5);
+        await sleep(10);
         return 'ok';
       }
     }
@@ -60,7 +62,10 @@ describe('@Once', () => {
 });
 
 describe('@Cache', () => {
-  it('caches within the TTL and recomputes after it expires', async () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('caches within the TTL and recomputes after it expires', () => {
     class C {
       calls = 0;
       @Cache(30)
@@ -72,7 +77,7 @@ describe('@Cache', () => {
     const c = new C();
     expect(c.now()).toBe(1);
     expect(c.now()).toBe(1);
-    await sleep(45);
+    jest.advanceTimersByTime(45);
     expect(c.now()).toBe(2);
   });
 });
@@ -84,7 +89,7 @@ describe('@Dedupe', () => {
       @Dedupe
       async load(id: string) {
         this.calls++;
-        await sleep(20);
+        await sleep(50);
         return `${id}:${this.calls}`;
       }
     }
@@ -92,8 +97,7 @@ describe('@Dedupe', () => {
     const [a, b] = await Promise.all([c.load('x'), c.load('x')]);
     expect(a).toBe(b);
     expect(c.calls).toBe(1);
-    // After settling, a fresh call runs again.
-    await c.load('x');
+    await c.load('x'); // after settling, a fresh call runs again
     expect(c.calls).toBe(2);
   });
 });
@@ -144,7 +148,7 @@ describe('@Concurrency', () => {
       async task() {
         active++;
         maxActive = Math.max(maxActive, active);
-        await sleep(20);
+        await sleep(50);
         active--;
       }
     }
@@ -157,7 +161,7 @@ describe('@Concurrency', () => {
 describe('@CircuitBreaker', () => {
   it('opens after the failure threshold then fails fast', async () => {
     class C {
-      @CircuitBreaker({ failureThreshold: 2, resetMs: 50 })
+      @CircuitBreaker({ failureThreshold: 2, resetMs: 200 })
       async call() {
         throw new Error('fail');
       }
@@ -165,13 +169,15 @@ describe('@CircuitBreaker', () => {
     const c = new C();
     await expect(c.call()).rejects.toThrow('fail');
     await expect(c.call()).rejects.toThrow('fail');
-    // Circuit now open -> fast fail with CircuitOpenError.
     await expect(c.call()).rejects.toBeInstanceOf(CircuitOpenError);
   });
 });
 
 describe('@Debounce', () => {
-  it('collapses rapid calls into one trailing invocation', async () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('collapses rapid calls into one trailing invocation', () => {
     class C {
       calls = 0;
       @Debounce(20)
@@ -184,13 +190,16 @@ describe('@Debounce', () => {
     c.onInput();
     c.onInput();
     expect(c.calls).toBe(0);
-    await sleep(40);
+    jest.advanceTimersByTime(40);
     expect(c.calls).toBe(1);
   });
 });
 
 describe('@Throttle', () => {
-  it('invokes on the leading edge and ignores calls within the window', async () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('invokes on the leading edge and ignores calls within the window', () => {
     class C {
       calls = 0;
       @Throttle(30)
@@ -202,7 +211,7 @@ describe('@Throttle', () => {
     c.onScroll();
     c.onScroll();
     expect(c.calls).toBe(1);
-    await sleep(40);
+    jest.advanceTimersByTime(40);
     c.onScroll();
     expect(c.calls).toBe(2);
   });
