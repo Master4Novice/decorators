@@ -215,6 +215,37 @@ class Account {
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
+## AI tools
+
+Expose class methods as LLM-callable tools, then dispatch the model's tool call
+back to the method — the whole agent loop, declaratively.
+
+```ts
+import { Tool, getTools, invokeTool } from '@master4n/decorators';
+
+class WeatherService {
+  @Tool({
+    description: 'Get the current temperature for a city',
+    parameters: {
+      type: 'object',
+      properties: { city: { type: 'string' } },
+      required: ['city'],
+    },
+  })
+  getTemperature(args: { city: string }) { /* ... */ }
+}
+
+const tools = getTools();
+// -> [{ name: 'getTemperature', description: '...', parameters: {...} }]
+// Pass `tools` to your LLM (OpenAI `tools`/`parameters`, Anthropic `input_schema`).
+
+// When the model returns a tool call:
+const result = invokeTool(new WeatherService(), call.name, call.arguments);
+```
+
+`parameters` is an **explicit** JSON Schema — TypeScript parameter types are
+erased at runtime, so the library does not (and cannot honestly) infer it.
+
 ## Observability (method decorators)
 
 | Decorator         | Description                                                              |

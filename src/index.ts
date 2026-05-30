@@ -66,6 +66,12 @@ export {
   setAuditResolver,
 } from './services/observability.js';
 export type { TraceOptions, AuditContext } from './services/observability.js';
+export { Tool, getTools, invokeTool, clearTools } from './services/ai.js';
+export type {
+  ToolOptions,
+  ToolManifest,
+  ToolParameters,
+} from './services/ai.js';
 export { loadEnv, parseEnv } from './utilities/env.js';
 export {
   redact,

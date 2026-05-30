@@ -124,6 +124,16 @@ class AppConfig {
 - `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
 - Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
 
+## AI tools (the agent loop)
+
+- `@Tool({ description, name?, parameters? })` (method) — register a method as an LLM-callable
+  tool. `parameters` is an explicit JSON Schema (runtime types are erased, so it is NOT inferred).
+  The method stays normally callable.
+- `getTools()` — returns `[{ name, description, parameters }]`, ready for an LLM's tool list
+  (OpenAI `tools`/`parameters`, Anthropic `input_schema`).
+- `invokeTool(instance, name, args)` — dispatch a model tool call to the method on `instance`.
+- `clearTools()` — clear the registry (tests). Types: `ToolOptions`, `ToolManifest`, `ToolParameters`.
+
 ## Observability (method decorators)
 
 - `@Trace({ args?=true, result?=false, redact? })` — structured entry/exit/error logging with a
