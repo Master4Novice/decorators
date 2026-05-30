@@ -1,5 +1,5 @@
 import { ValidationError } from './errors.js';
-import { registerInstanceSpec } from './injection.js';
+import { addPropertyValidator } from './validate-property.js';
 
 export interface PatternOptions {
   /** Custom error message thrown on a non-matching assignment. */
@@ -17,9 +17,9 @@ export interface PatternOptions {
  * previous value. `null`/`undefined` are allowed (treat the field as optional /
  * clearable) — combine with your own required check if needed.
  *
- * Put `@Configured` on the class for this to work under any
- * `useDefineForClassFields` setting (otherwise it needs
- * `useDefineForClassFields: false`, like the other property decorators).
+ * Composes with `@Min`/`@Max`/`@Range` on the same property. Put `@Configured`
+ * on the class for this to work under any `useDefineForClassFields` setting
+ * (otherwise it needs `useDefineForClassFields: false`).
  *
  * @example
  * \@Configured
@@ -33,8 +33,8 @@ export interface PatternOptions {
  */
 export function Pattern(regex: RegExp, options: PatternOptions = {}) {
   return function (target: object, propertyKey: string | symbol): void {
-    const validate = (value: unknown): unknown => {
-      if (value === undefined || value === null) return value;
+    addPropertyValidator(target, propertyKey, (value) => {
+      if (value === undefined || value === null) return;
       const candidate = options.coerce ? String(value) : value;
       if (typeof candidate !== 'string' || !regex.test(candidate)) {
         throw new ValidationError(
@@ -43,36 +43,6 @@ export function Pattern(regex: RegExp, options: PatternOptions = {}) {
               propertyKey,
             )}" does not match ${regex}.`,
         );
-      }
-      return value;
-    };
-
-    const defineValidatingAccessor = (owner: object): void => {
-      const store = Symbol(String(propertyKey));
-      Object.defineProperty(owner, propertyKey, {
-        get(this: Record<symbol, unknown>) {
-          return this[store];
-        },
-        set(this: Record<symbol, unknown>, value: unknown) {
-          this[store] = validate(value);
-        },
-        enumerable: true,
-        configurable: true,
-      });
-    };
-
-    // Standalone path: prototype accessor (useDefineForClassFields: false).
-    defineValidatingAccessor(target);
-
-    // @Configured path: own instance accessor, robust under both settings.
-    // Preserve and re-validate any value the constructor already assigned.
-    registerInstanceSpec(target, propertyKey, (instance) => {
-      const existing = (instance as Record<string | symbol, unknown>)[
-        propertyKey
-      ];
-      defineValidatingAccessor(instance);
-      if (existing !== undefined) {
-        (instance as Record<string | symbol, unknown>)[propertyKey] = existing;
       }
     });
   };

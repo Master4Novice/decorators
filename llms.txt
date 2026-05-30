@@ -75,6 +75,10 @@ class AppConfig {
   the regex; a non-matching assignment throws `ValidationError` and keeps the old value.
   null/undefined allowed. `coerce: true` tests `String(value)`. Use with `@Configured` for
   robustness under useDefineForClassFields: true.
+- `@Min(n, { message? })`, `@Max(n, { message? })`, `@Range(min, max, { message? })` (property) —
+  reject out-of-bounds assignments (throw `ValidationError`). Polymorphic: compares a number's
+  value, or a string/array's length. null/undefined allowed. Compose with each other and
+  `@Pattern` on the same property. Use with `@Configured` for modern class-field robustness.
 - `@Role(...roles: string[])` (method) — throws `ForbiddenError` unless the principal has
   one of the roles. Configure via `setRoleResolver((ctx) => string[] | Promise<string[]>)`.
 - `@Authorize(predicate, message?)` (method) — throws `ForbiddenError` unless `predicate(ctx)`

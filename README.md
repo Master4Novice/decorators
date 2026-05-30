@@ -121,6 +121,8 @@ Guards throw on invalid input — misuse fails fast instead of slipping through.
 | `@NotNull`                 | method   | `ValidationError` | rejects `null`/`undefined` arguments.                |
 | `@ValidDate`               | method   | `ValidationError` | first arg must be a valid `{ DD, MM, YYYY }` date.   |
 | `@Pattern(regex, opts?)`   | property | `ValidationError` | only allows assigning values that match the regex.   |
+| `@Min(n)` / `@Max(n)`      | property | `ValidationError` | string/array **length** ≥ n / ≤ n, or **number** value. |
+| `@Range(min, max)`         | property | `ValidationError` | inclusive bounds on string/array length or number value. |
 | `@Role(...roles)`          | method | `ForbiddenError`  | allows only if the principal has one of the roles.     |
 | `@Authorize(predicate)`    | method | `ForbiddenError`  | allows only if `predicate(ctx)` is truthy.             |
 
@@ -159,6 +161,19 @@ class User {
 }
 
 new User().email = 'not-an-email'; // throws ValidationError
+```
+
+`@Min`/`@Max`/`@Range` are polymorphic — they check **string/array length** or a
+**number's value** — and compose with each other and `@Pattern`:
+
+```ts
+@Configured
+class Account {
+  @Pattern(/^[a-z0-9_]+$/) @Min(3) @Max(20)
+  username!: string;            // lowercase, 3–20 chars
+
+  @Range(0, 100) score!: number; // 0..100
+}
 ```
 
 ## Utility decorators

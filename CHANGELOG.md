@@ -4,6 +4,24 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] — 2026-05-30
+
+### Added
+
+- `@Min(n)`, `@Max(n)`, `@Range(min, max)` property decorators. Polymorphic:
+  they compare a number's value, or a string/array's length. A violating
+  assignment throws `ValidationError` and the property keeps its previous value;
+  `null`/`undefined` are allowed. `ConstraintOptions` (`{ message }`) exported.
+- Property validators now **compose**: `@Pattern`, `@Min`, `@Max`, `@Range` can
+  be stacked on the same property and all run (previously a second property
+  decorator would overwrite the first's accessor).
+
+### Changed
+
+- Internal: extracted a shared `addPropertyValidator` helper (chained validators
+  per property) that `@Pattern` and the new constraints share. No public behavior
+  change for existing decorators.
+
 ## [2.3.0] — 2026-05-30
 
 ### Added
@@ -106,6 +124,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.4.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.4.0
 [2.3.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.1.0
