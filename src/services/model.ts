@@ -3,8 +3,7 @@ import { registerInstanceSpec } from './injection.js';
 import { redact, type RedactOptions } from './../utilities/redact.js';
 
 // ---------------------------------------------------------------------------
-// Lombok-style class & field decorators — but more advanced: @ToString redacts
-// secrets, @With preserves frozen-ness, builders are typed via `builder()`.
+// Model — data/domain class decorators. @ToString redacts secrets, @With preserves frozen-ness, builders are typed via `builder()`.
 // ---------------------------------------------------------------------------
 
 export interface ToStringOptions {
@@ -60,7 +59,7 @@ function installWith(proto: any): void {
 /**
  * Class decorator: adds a `toString()` that lists the instance's fields —
  * **with secrets redacted** (`@Secret` names + {@link DEFAULT_SENSITIVE_KEYS}),
- * which Lombok's `@ToString` does not do.
+ * which plain serialization does not do.
  *
  * @example
  * \@ToString()
@@ -96,7 +95,7 @@ export function With(ctor: new (...args: any[]) => object): void {
 }
 
 /**
- * Class decorator: Lombok-style `@Data` — `@ToString` + `equals()` + `with()`.
+ * Class decorator: `@Data` — `@ToString` + `equals()` + `with()`.
  */
 export function Data(ctor: new (...args: any[]) => object): void {
   installToString(ctor.prototype);
@@ -106,7 +105,7 @@ export function Data(ctor: new (...args: any[]) => object): void {
 
 /**
  * Class decorator: freeze every instance after construction (`Object.freeze`),
- * making it immutable (Lombok `@Value`). Pair with `@With` for copy-on-write.
+ * making it immutable. Pair with `@With` for copy-on-write.
  *
  * Note: don't combine with decorators that mutate the instance after
  * construction (e.g. `@Configured`) — freezing blocks them. Pairs cleanly with
@@ -162,7 +161,7 @@ export function Readonly(target: object, propertyKey: string | symbol): void {
 
 /**
  * Method decorator: serialize concurrent **async** calls per instance — each
- * call waits for the previous to settle (a mutex; Lombok `@Synchronized`). The
+ * call waits for the previous to settle (a mutex). The
  * decorated method returns a promise.
  */
 export function Synchronized(
@@ -218,7 +217,7 @@ function makeBuilder<T extends object>(ctor: new () => T): BuilderOf<T> {
 
 /**
  * Typed fluent builder for a class — `builder(User).name('a').age(5).build()`.
- * Unlike Lombok this needs no codegen and is fully typed via {@link BuilderOf}.
+ * This needs no codegen and is fully typed via {@link BuilderOf}.
  * (`@Builder` also adds a runtime `.builder()` static for JS callers.)
  */
 export function builder<T extends object>(ctor: new () => T): BuilderOf<T> {

@@ -15,7 +15,7 @@ import {
   Synchronized,
   Builder,
   builder,
-} from '../src/services/lombok.js';
+} from '../src/services/model.js';
 import { Secret, Configured } from '../src/services/injection.js';
 import { ValidationError } from '../src/services/errors.js';
 

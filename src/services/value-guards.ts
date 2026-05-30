@@ -1,9 +1,9 @@
 import { ValidationError } from './errors.js';
 import { addPropertyValidator } from './validate-property.js';
 
-// Jakarta Bean Validation-style constraints (the ones not already provided by
+// Value guards — additional validation constraints (beyond
 // @Min/@Max/@Range/@Email/@Pattern/@Positive/@Integer/@NonEmpty). All are
-// property decorators; like Jakarta, they skip null/undefined (combine with a
+// property decorators; they skip null/undefined (combine with a
 // presence check) — except @NotBlank, which asserts presence.
 
 interface Msg {
@@ -32,7 +32,7 @@ export function NotBlank(options: Msg = {}) {
     );
 }
 
-/** String/array length must be within `[min, max]` (Jakarta `@Size`). */
+/** String/array length must be within `[min, max]`. */
 export function Size(min: number, max: number, options: Msg = {}) {
   return (t: object, k: string | symbol) =>
     addPropertyValidator(t, k, (v) => {
@@ -120,7 +120,7 @@ export const FutureOrPresent = dateConstraint(
   'in the present or future',
 );
 
-/** Value must be boolean `true` (Jakarta `@AssertTrue`). */
+/** Value must be boolean `true`. */
 export function AssertTrue(options: Msg = {}) {
   return (t: object, k: string | symbol) =>
     addPropertyValidator(t, k, (v) => {
@@ -129,7 +129,7 @@ export function AssertTrue(options: Msg = {}) {
     });
 }
 
-/** Value must be boolean `false` (Jakarta `@AssertFalse`). */
+/** Value must be boolean `false`. */
 export function AssertFalse(options: Msg = {}) {
   return (t: object, k: string | symbol) =>
     addPropertyValidator(t, k, (v) => {
@@ -140,7 +140,7 @@ export function AssertFalse(options: Msg = {}) {
 
 /**
  * Number must have at most `integer` integer digits and `fraction` fractional
- * digits (Jakarta `@Digits`).
+ * digits.
  */
 export function Digits(integer: number, fraction: number, options: Msg = {}) {
   return (t: object, k: string | symbol) =>

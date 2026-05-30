@@ -68,7 +68,7 @@ export {
   AssertTrue,
   AssertFalse,
   Digits,
-} from './services/bean-validators.js';
+} from './services/value-guards.js';
 export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';
 export { Retry, Memoize, Deprecated, Measure } from './services/utility.js';
@@ -133,8 +133,8 @@ export {
   Synchronized,
   Builder,
   builder,
-} from './services/lombok.js';
-export type { ToStringOptions, BuilderOf } from './services/lombok.js';
+} from './services/model.js';
+export type { ToStringOptions, BuilderOf } from './services/model.js';
 export { Tool, getTools, invokeTool, clearTools } from './services/ai.js';
 export type {
   ToolOptions,

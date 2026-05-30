@@ -8,9 +8,25 @@
 ![Owner](https://img.shields.io/badge/Owner-Master4Novice-orange?style=flat)
 
 **AI-friendly TypeScript decorators for Node/backend apps.** One self-documenting
-decorator replaces a block of boilerplate — Spring-style config & value injection,
-plus a handful of method/property utilities. Designed so coding agents emit one
+decorator replaces a block of boilerplate. Designed so coding agents emit one
 correct line instead of ten repetitive ones.
+
+## Decorator families
+
+Every decorator belongs to one of nine families — a quick mental map for picking
+the right one:
+
+| Family | Purpose | Examples |
+| ------ | ------- | -------- |
+| **Inject** | pull values into fields | `@Value` `@Env` `@Secret` `@Config` `@Default` `@Configured` |
+| **Guard** | reject invalid input (throws) | `@NotNull` `@Pattern` `@Min` `@Max` `@Range` `@Email` `@URL` `@UUID` `@Enum` `@Size` `@NotBlank` `@Past` `@Future` `@AssertTrue` `@Digits` … |
+| **Shape** | normalize values on assign | `@Trim` `@Lowercase` `@Uppercase` `@Coerce` `@Clamp` |
+| **Shield** | access control & secret redaction | `@Role` `@Authorize` `@Secret` + `redact()` |
+| **Flow** | resilience & control flow | `@Timeout` `@Retry` `@Cache` `@Dedupe` `@Fallback` `@RateLimit` `@Concurrency` `@CircuitBreaker` `@Debounce` `@Throttle` `@Once` |
+| **Insight** | observability | `@Log` `@Trace` `@Audit` `@LogErrors` `@Measure` `@Deprecated` |
+| **Model** | data/domain classes | `@Data` `@ToString` `@Equals` `@With` `@Immutable` `@Readonly` `@Builder` `@GenerateID` `@Counter` `@Synchronized` |
+| **Route** | HTTP REST controllers | `@Controller` `@Get` `@Post` `@Param` `@Query` `@Body` `@HttpCode` `@Use` … |
+| **Agent** | LLM tool registration | `@Tool` + `getTools()` / `invokeTool()` |
 
 ## Installation
 
@@ -36,7 +52,7 @@ Enable legacy (experimental) decorators in your `tsconfig.json`:
 > `useDefineForClassFields` setting. (Without `@Configured`, injection relies on
 > prototype accessors, which only work when `useDefineForClassFields` is `false`.)
 
-## The flagship: config & value injection
+## Inject — config & value injection (flagship)
 
 Stop hand-writing `process.env.X ?? config.get(...) ?? default` plus type
 coercion, for every field.
@@ -121,7 +137,7 @@ const logger = winston.createLogger({
 });
 ```
 
-## Validation & access (these throw)
+## Guard & Shield — validation & access
 
 Guards throw on invalid input — misuse fails fast instead of slipping through.
 
@@ -137,11 +153,11 @@ Guards throw on invalid input — misuse fails fast instead of slipping through.
 | `@NonEmpty`                | property | `ValidationError` | rejects `null`/`undefined`/`''`/`[]`.                |
 | `@Integer` `@Positive`     | property | `ValidationError` | number must be an integer / greater than zero.       |
 | `@NotBlank`                | property | `ValidationError` | string with a non-whitespace char (asserts presence). |
-| `@Size(min, max)`          | property | `ValidationError` | string/array length bounds (Jakarta `@Size`).        |
+| `@Size(min, max)`          | property | `ValidationError` | string/array length bounds.        |
 | `@Negative` `@PositiveOrZero` `@NegativeOrZero` | property | `ValidationError` | number sign constraints. |
 | `@Past` `@Future` `@PastOrPresent` `@FutureOrPresent` | property | `ValidationError` | date is before/after now. |
 | `@AssertTrue` `@AssertFalse` | property | `ValidationError` | boolean must be true / false.                      |
-| `@Digits(int, frac)`       | property | `ValidationError` | max integer + fractional digits (Jakarta `@Digits`). |
+| `@Digits(int, frac)`       | property | `ValidationError` | max integer + fractional digits. |
 
 **Transforms** normalize the value on assignment (and run *before* validators,
 whatever the stacking order):
@@ -225,15 +241,15 @@ class Account {
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
-## Data classes (Lombok-style, but better)
+## Model — data classes
 
 | Decorator        | Adds                                                                      |
 | ---------------- | ------------------------------------------------------------------------- |
-| `@ToString(opts?)` | a `toString()` listing fields — **with `@Secret`/sensitive fields redacted** (Lombok doesn't). `only`/`exclude` options. |
+| `@ToString(opts?)` | a `toString()` listing fields — **with `@Secret`/sensitive fields redacted**. `only`/`exclude` options. |
 | `@Equals(...keys?)`| an `equals(other)` (same-constructor, field-wise).                      |
 | `@With`          | `with(patch)` → shallow copy with overrides (frozen-preserving).          |
 | `@Data`          | `@ToString` + `equals()` + `with()` in one.                               |
-| `@Immutable`     | `Object.freeze` each instance (Lombok `@Value`). Pairs with `@With`.      |
+| `@Immutable`     | `Object.freeze` each instance (immutable value object). Pairs with `@With`.      |
 | `@Readonly`      | field: assignable once, then throws (like `final`).                       |
 | `@Synchronized`  | method: serialize concurrent async calls per instance (mutex).            |
 | `@Builder` / `builder(Class)` | fluent builder. `builder()` is **fully typed** (no codegen). |
@@ -250,9 +266,9 @@ const b = (a as any).with({ amount: 250 });   // frozen copy
 const c = builder(Money).amount(50).currency('USD').build(); // typed builder
 ```
 
-## Express REST controllers (Spring-style)
+## Route — REST controllers
 
-Build Express routes the way Java/Spring does — `@Controller` + `@GetMapping` +
+Build Express routes declaratively — `@Controller` + `@GetMapping` +
 `@PathVariable`/`@RequestParam`/`@RequestBody` — then wire them in with
 `registerControllers`. Framework-agnostic (no `express` dependency); works with
 any Express-compatible `app`/`Router`.
@@ -286,7 +302,7 @@ registerControllers(app, [new UserController()]);
 Returned values are sent as JSON with the configured status; throw and it's
 routed to `next(err)`. Inject `@Res()` to take over the response yourself.
 
-| Concise            | Spring alias        | Purpose                                   |
+| Concise            | Alias               | Purpose                                   |
 | ------------------ | ------------------- | ----------------------------------------- |
 | `@Controller(base)`| `@RestController`   | class: base path + controller middleware. |
 | `@Get` `@Post` `@Put` `@Patch` `@Delete` `@Options` `@Head` `@All` | `@GetMapping` … `@RequestMapping` | route a method. |
@@ -299,7 +315,7 @@ routed to `next(err)`. Inject `@Res()` to take over the response yourself.
 | `@ContentType(t)`  | `@Produces`         | response content-type.                    |
 | `@Redirect(url)` `@Use(...mw)` | —       | redirect / attach middleware (class or route). |
 
-## AI tools
+## Agent — LLM tools
 
 Expose class methods as LLM-callable tools, then dispatch the model's tool call
 back to the method — the whole agent loop, declaratively.
@@ -334,7 +350,7 @@ erased at runtime, so the library does not (and cannot honestly) infer it.
 > duplicate name overwrites the earlier one (so `invokeTool` would target the
 > wrong method). Give colliding tools an explicit unique `name`.
 
-## Observability (method decorators)
+## Insight — observability
 
 | Decorator         | Description                                                              |
 | ----------------- | ----------------------------------------------------------------------- |
@@ -354,7 +370,7 @@ class OrderService {
 }
 ```
 
-## Resilience & control flow (method decorators)
+## Flow — resilience & control flow
 
 | Decorator                  | Description                                                        |
 | -------------------------- | ----------------------------------------------------------------- |

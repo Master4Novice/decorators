@@ -16,7 +16,7 @@ import {
   AssertTrue,
   AssertFalse,
   Digits,
-} from '../src/services/bean-validators.js';
+} from '../src/services/value-guards.js';
 import { ValidationError } from '../src/services/errors.js';
 
 describe('@NotBlank', () => {

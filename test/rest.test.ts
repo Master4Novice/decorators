@@ -128,7 +128,7 @@ describe('routing & params', () => {
     expect(res.body).toEqual({ created: 'x' });
   });
 
-  it('supports Spring-style aliases', async () => {
+  it('supports the familiar route aliases', async () => {
     @RestController('/api')
     class ApiController {
       @GetMapping('/thing/:key')

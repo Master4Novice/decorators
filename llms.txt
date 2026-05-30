@@ -1,7 +1,7 @@
 # @master4n/decorators
 
 > AI-friendly TypeScript decorators for Node/backend apps. One self-documenting
-> decorator replaces a block of boilerplate. Flagship: Spring-style config &
+> decorator replaces a block of boilerplate. Flagship: config &
 > value injection. Backend/class-based code (not React function components).
 
 ## Install & setup
@@ -26,8 +26,8 @@ uses prototype accessors that only work when `useDefineForClassFields` is `false
   Required (throws `MissingConfigError`) when no default is passed.
 - `@Env(name: string, default?)` — value from `process.env`, coerced to the type of
   the default (number, boolean, comma-split array). Required when no default.
-- `@Secret(name: string, default?)` — like `@Env`; also registers the property name in
-  `getSecretKeys()` for your logger to redact (the package does not redact itself).
+- `@Secret(name: string, default?)` — like `@Env`; marks the property name as secret so
+  `redact()` / `redactFormat()` (and the package logger) mask it. `getSecretKeys()` lists them.
 - `@Config(path: string)` — inject a whole config subtree/object (required).
 - `@Default(value)` — inject a literal constant.
 - `@Configured` — class decorator; materializes the above as own instance properties
@@ -83,7 +83,7 @@ class AppConfig {
 - `@Enum(values, { message? })` (property) — value must be one of `values`.
 - `@NonEmpty({ message? })` (property) — rejects null/undefined/''/[] (implies presence).
 - `@Integer()`, `@Positive()` (property) — number must be an integer / > 0.
-- Jakarta Bean-Validation-style (property; skip null/undefined except @NotBlank): `@NotBlank()`,
+- More value guards (property; skip null/undefined except @NotBlank): `@NotBlank()`,
   `@Size(min, max)`, `@Negative()`, `@PositiveOrZero()`, `@NegativeOrZero()`, `@Past()`,
   `@Future()`, `@PastOrPresent()`, `@FutureOrPresent()`, `@AssertTrue()`, `@AssertFalse()`,
   `@Digits(integer, fraction)`. All take an optional `{ message }` and compose with the others.
@@ -128,21 +128,21 @@ class AppConfig {
 - `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
 - Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
 
-## Data-class decorators (Lombok-style)
+## Model — data-class decorators
 
 - `@ToString({ only?, exclude?, redact? })` (class) — adds toString(); redacts @Secret/sensitive
-  fields (more than Lombok).
+  fields.
 - `@Equals(...keys?)` (class) — adds equals(other); same-constructor, field-wise ===.
 - `@With` (class) — adds with(patch) -> shallow copy with overrides; preserves frozen-ness.
 - `@Data` (class) — @ToString + equals() + with().
-- `@Immutable` (class) — Object.freeze each instance (Lombok @Value). Don't combine with
+- `@Immutable` (class) — Object.freeze each instance (immutable value object). Don't combine with
   @Configured (freeze blocks post-construction mutation).
 - `@Readonly` (field) — assignable once then throws ValidationError (like final).
 - `@Synchronized` (method) — serialize concurrent async calls per instance (mutex; returns promise).
 - `@Builder` (class) adds a runtime static builder(); `builder(Class)` is the typed standalone
   fluent builder: builder(User).name('a').age(5).build(). Types: ToStringOptions, BuilderOf<T>.
 
-## Express REST controllers (Spring-style; legacy decorators required)
+## Route — REST controllers (legacy decorators required)
 
 Declarative Express routing. Decorate a class + methods + parameters, then call
 `registerControllers(app, [controllerInstanceOrClass, ...])`. No express runtime dependency

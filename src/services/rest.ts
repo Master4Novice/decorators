@@ -1,5 +1,5 @@
 /**
- * Spring-MVC-style REST controllers for Express (and any Express-compatible
+ * Decorator-based REST controllers for Express (and any Express-compatible
  * router). Decorate a class with `@Controller`, its methods with `@Get`/`@Post`/…,
  * and their parameters with `@Param`/`@Query`/`@Body`/… — then wire everything
  * into your app with {@link registerControllers}.
@@ -116,7 +116,7 @@ export function Controller(basePath = '') {
   };
 }
 
-/** Spring-style alias for {@link Controller}. */
+/** Alias for {@link Controller}. */
 export const RestController = Controller;
 
 // --- HTTP method decorators ------------------------------------------------
@@ -155,7 +155,7 @@ export const PatchMapping = Patch;
 export const DeleteMapping = Delete;
 
 /**
- * Spring-style `@RequestMapping(path, method?)`. Defaults to matching all
+ * `@RequestMapping(path, method?)` — defaults to matching all
  * methods when `method` is omitted.
  */
 export function RequestMapping(path = '/', method?: string) {
