@@ -58,6 +58,14 @@ export {
 export { Role, Authorize, setRoleResolver } from './services/access.js';
 export type { AccessContext } from './services/access.js';
 export { Retry, Memoize, Deprecated, Measure } from './services/utility.js';
+export {
+  Trace,
+  Audit,
+  LogErrors,
+  getTraceId,
+  setAuditResolver,
+} from './services/observability.js';
+export type { TraceOptions, AuditContext } from './services/observability.js';
 export { loadEnv, parseEnv } from './utilities/env.js';
 export {
   redact,

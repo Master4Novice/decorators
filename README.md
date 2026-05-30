@@ -210,6 +210,26 @@ class Account {
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
+## Observability (method decorators)
+
+| Decorator         | Description                                                              |
+| ----------------- | ----------------------------------------------------------------------- |
+| `@Trace(opts?)`   | structured entry/exit/error logs with a **correlation id** threaded through nested calls (AsyncLocalStorage). Args/results redacted. `getTraceId()` reads the current id. |
+| `@Audit(action?)` | logs `actor` + `action` + redacted args. Set the "who" via `setAuditResolver`. |
+| `@LogErrors()`    | logs errors (redacted args + stack) and **rethrows** (sync/async).      |
+
+```ts
+import { Trace, Audit, setAuditResolver, getTraceId } from '@master4n/decorators';
+
+setAuditResolver((ctx) => (ctx.instance as any).user?.id ?? 'system');
+
+class OrderService {
+  @Trace({ result: true })           // one trace id flows through the whole call tree
+  @Audit('order.refund')
+  async refund(orderId: string) { /* getTraceId() to tag your own logs */ }
+}
+```
+
 ## Resilience & control flow (method decorators)
 
 | Decorator                  | Description                                                        |

@@ -4,6 +4,16 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] — 2026-05-30
+
+### Added
+
+- **Observability method decorators**: `@Trace` (structured entry/exit/error
+  logging with a correlation id threaded through nested calls via
+  AsyncLocalStorage; `getTraceId()` helper), `@Audit(action?)` (actor + action,
+  with `setAuditResolver` for the "who"), and `@LogErrors` (log + rethrow). All
+  redact logged args/results via `redact()`.
+
 ## [2.6.0] — 2026-05-30
 
 ### Added
@@ -153,6 +163,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.7.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.7.0
 [2.6.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.5.0
 [2.4.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.4.0

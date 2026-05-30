@@ -124,6 +124,15 @@ class AppConfig {
 - `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
 - Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
 
+## Observability (method decorators)
+
+- `@Trace({ args?=true, result?=false, redact? })` — structured entry/exit/error logging with a
+  correlation id threaded through nested calls (AsyncLocalStorage); args/results redacted.
+  `getTraceId()` returns the current scope's id for correlating your own logs.
+- `@Audit(action?, { redact? })` — logs actor + action + redacted args. Configure the actor via
+  `setAuditResolver((ctx) => string)` (ctx = { instance, methodName, args }).
+- `@LogErrors({ redact? })` — logs errors (redacted args + stack) and rethrows (sync/async).
+
 ## Notes for agents
 
 - Backend/class-based only. Decorators do not apply to React function components.
