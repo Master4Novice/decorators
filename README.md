@@ -13,7 +13,7 @@ correct line instead of ten repetitive ones.
 
 ## Decorator families
 
-Every decorator belongs to one of nine families — a quick mental map for picking
+Every decorator belongs to one of ten families — a quick mental map for picking
 the right one:
 
 | Family | Purpose | Examples |
@@ -26,7 +26,101 @@ the right one:
 | **Insight** | observability | `@Log` `@Trace` `@Audit` `@LogErrors` `@Measure` `@Deprecated` |
 | **Model** | data/domain classes | `@Data` `@ToString` `@Equals` `@With` `@Immutable` `@Readonly` `@Builder` `@GenerateID` `@Counter` `@Synchronized` |
 | **Route** | HTTP REST controllers | `@Controller` `@Get` `@Post` `@Param` `@Query` `@Body` `@HttpCode` `@Use` … |
-| **Agent** | LLM tool registration | `@Tool` + `getTools()` / `invokeTool()` |
+| **Agent** | LLM tools & safety | `@Tool` `@Validate` `@Guardrail` `@Idempotent` `@Meter` + `getTools()` / `invokeTool()` / `getMetrics()` |
+| **Craft** | class & method ergonomics | `@Bind` `@Lazy` `@Sealed` `@Mixin` `@OnChange` |
+
+## Recipes for AI agents
+
+Real, copy-paste compositions. Each replaces a page of hand-written plumbing with
+a stack of declarations.
+
+### A bullet-proof DTO (Shape + Guard)
+
+```ts
+import { Configured, Trim, Lowercase, Email, NotBlank, Size, Coerce, Range } from '@master4n/decorators';
+
+@Configured
+class SignupDto {
+  @Trim @Lowercase @Email()         email!: string;   // normalized, then validated
+  @Trim @NotBlank() @Size(3, 20)    username!: string;
+  @Coerce('number') @Range(18, 120) age!: number;     // "21" -> 21, bounded
+}
+// Assigning a bad value throws ValidationError at the source — no manual checks.
+```
+
+### A resilient upstream client (Flow)
+
+```ts
+import { CircuitBreaker, Retry, Timeout, Cache, Fallback } from '@master4n/decorators';
+
+class UserApi {
+  @CircuitBreaker({ failureThreshold: 5, resetMs: 30_000 })
+  @Retry(3, { delayMs: 200 })
+  @Timeout(5_000)
+  @Cache(60_000)                 // memoize good responses for 60s
+  @Fallback(null)                // never throw to the caller; return null
+  async getUser(id: string) {
+    return (await fetch(`/users/${id}`)).json();
+  }
+}
+```
+
+### A safe, observable AI tool (Agent + Insight)
+
+```ts
+import { Tool, Validate, Idempotent, Guardrail, Meter, Trace, getTools, invokeTool, getMetrics } from '@master4n/decorators';
+
+class BookingTools {
+  @Tool({
+    description: 'Book a room for a guest',
+    parameters: {
+      type: 'object',
+      properties: { guest: { type: 'string' }, nights: { type: 'number' } },
+      required: ['guest', 'nights'],
+    },
+  })
+  @Trace()                                            // correlation-id traced
+  @Meter('book_room')                                 // counts + timing -> getMetrics()
+  @Idempotent((args) => `${args.guest}:${args.nights}`) // safe to retry
+  @Validate((args) => (args[0] as any)?.nights > 0)   // reject bad tool input
+  @Guardrail((res: { confirmed: boolean }) => res.confirmed, { retries: 1 }) // verify output
+  async bookRoom(args: { guest: string; nights: number }) {
+    return { confirmed: true, ref: 'BK-123' };
+  }
+}
+
+const svc = new BookingTools();
+const tools = getTools();                       // -> hand to the LLM
+// model picks a tool ...
+await invokeTool(svc, 'bookRoom', { guest: 'Asha', nights: 2 });
+getMetrics().book_room;                          // { calls, errors, avgMs, ... }
+```
+
+### An immutable domain model (Model)
+
+```ts
+import { Data, Immutable, builder } from '@master4n/decorators';
+
+@Immutable
+@Data                                            // toString + equals + with
+class Money { constructor(public amount = 0, public currency = 'INR') {} }
+
+const a = new Money(100, 'INR');
+const b = (a as any).with({ amount: 250 });      // frozen copy, original untouched
+const c = builder(Money).amount(50).currency('USD').build();  // typed builder
+```
+
+### Less boilerplate (Craft)
+
+```ts
+import { Bind, Lazy, OnChange } from '@master4n/decorators';
+
+class Editor {
+  @Lazy((self) => buildHeavyIndex(self))  index!: Index;   // computed once, on first read
+  @OnChange((v) => autosave(v))            content = '';     // reacts to real changes
+  @Bind                                    onClick() { return this.content; } // safe to detach
+}
+```
 
 ## Installation
 
@@ -349,6 +443,30 @@ erased at runtime, so the library does not (and cannot honestly) infer it.
 > Tool names live in a **process-global** registry and must be unique — a
 > duplicate name overwrites the earlier one (so `invokeTool` would target the
 > wrong method). Give colliding tools an explicit unique `name`.
+
+### Agent power-ups (method decorators)
+
+Wrap the methods an agent calls so they're validated, safe to retry, verified,
+and measured:
+
+| Decorator                | Does                                                                  |
+| ------------------------ | -------------------------------------------------------------------- |
+| `@Validate(check)`       | reject bad **input** args before running (throws `ValidationError`). |
+| `@Guardrail(check, opts?)` | verify the **output**; retry up to `opts.retries`, else `GuardrailError`. |
+| `@Idempotent(keyFn?)`    | cache the result by an idempotency key — safe to retry (no TTL; failures aren't cached). |
+| `@Meter(name?)`          | record calls / errors / timing; read with `getMetrics()`.            |
+
+## Craft — class & method ergonomics
+
+Kill the small repeated boilerplate.
+
+| Decorator         | Does                                                                       |
+| ----------------- | -------------------------------------------------------------------------- |
+| `@Bind`           | auto-bind a method to its instance — no more `.bind(this)` for callbacks.   |
+| `@Lazy(factory)`  | compute a property once on first access, then cache.                        |
+| `@Sealed`         | `Object.seal` each instance (no added/removed props; values stay writable). |
+| `@Mixin(...src)`  | copy members from other objects/classes onto the class.                     |
+| `@OnChange(fn)`   | run `fn(new, old, instance)` when a property actually changes (first set initializes silently). |
 
 ## Insight — observability
 

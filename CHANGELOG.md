@@ -6,7 +6,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0] — 2026-05-31
 
-A complete rebuild and major expansion of the library, organized into nine
+A complete rebuild and major expansion of the library, organized into ten
 decorator **families**. First release of all of the following.
 
 ### Added
@@ -43,8 +43,12 @@ decorator **families**. First release of all of the following.
   `@Options`/`@Head`/`@All`, parameter decorators `@Param`/`@Query`/`@Body`/
   `@Header`/`@Cookie`/`@Req`/`@Res`/`@Next`, modifiers `@HttpCode`/`@ContentType`/
   `@Redirect`/`@Use`, familiar aliases, and `registerControllers(app, ...)`.
-- **Agent** — LLM tool registration: `@Tool` (explicit JSON-Schema), `getTools()`,
-  `invokeTool()`, `clearTools()`.
+- **Agent** — LLM tools & safety: `@Tool` (explicit JSON-Schema), `getTools()`,
+  `invokeTool()`, `clearTools()`, plus power-ups for the methods an agent calls:
+  `@Validate` (input), `@Guardrail` (output, retrying; `GuardrailError`),
+  `@Idempotent` (key-based result cache), and `@Meter` + `getMetrics()`.
+- **Craft** — class & method ergonomics: `@Bind`, `@Lazy`, `@Sealed`, `@Mixin`,
+  `@OnChange`.
 - Standalone build & test setup, CI (Node 20/22/24 on Linux/macOS/Windows), an
   `llms.txt` API reference, and a pre-publish built-bundle smoke test.
 

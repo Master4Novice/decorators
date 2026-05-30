@@ -170,6 +170,26 @@ status; thrown errors -> next(err); inject `@Res()` to own the response.
 - `clearTools()` — clear the registry (tests). Types: `ToolOptions`, `ToolManifest`, `ToolParameters`.
 - Tool names are process-global and must be unique (a duplicate overwrites the earlier entry).
 
+## Agent power-ups (method decorators — wrap the methods an agent calls)
+
+- `@Validate(check, { message? })` — `check(args)` returns boolean (or throws); falsy -> `ValidationError`
+  before the method runs. Guards LLM-tool inputs.
+- `@Guardrail(check, { retries?, message? })` — validate the (awaited) output; retry up to `retries`,
+  else throw `GuardrailError`. Sync/async. Verifies model output.
+- `@Idempotent(keyFn?)` — cache result by idempotency key (per instance); repeat calls return the
+  stored result. No TTL (vs @Cache); persists past in-flight (vs @Dedupe); failed async not cached.
+- `@Meter(name?)` — record calls/errors/timing; `getMetrics()` returns `{ [name]: { calls, errors,
+  totalMs, avgMs } }`; `resetMetrics()` clears. Sync/async.
+
+## Craft — class & method ergonomics
+
+- `@Bind` (method) — auto-bind to instance; safe to pass as a detached callback.
+- `@Lazy(factory)` (property) — compute once on first access, then cache. @Configured-safe.
+- `@Sealed` (class) — Object.seal each instance (no add/remove props; values stay writable).
+- `@Mixin(...sources)` (class) — copy members from objects/classes onto the class prototype.
+- `@OnChange(handler)` (property) — fire handler(new, old, instance) on a real change; the first
+  assignment initializes silently. @Configured-safe.
+
 ## Observability (method decorators)
 
 - `@Trace({ args?=true, result?=false, redact? })` — structured entry/exit/error logging with a

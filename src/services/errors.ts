@@ -37,3 +37,11 @@ export class CircuitOpenError extends Error {
     this.name = 'CircuitOpenError';
   }
 }
+
+/** Thrown by `@Guardrail` when a method's output fails its validation. */
+export class GuardrailError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GuardrailError';
+  }
+}

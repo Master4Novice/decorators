@@ -22,6 +22,7 @@ export {
   TimeoutError,
   RateLimitError,
   CircuitOpenError,
+  GuardrailError,
 } from './services/errors.js';
 export {
   Timeout,
@@ -135,7 +136,25 @@ export {
   builder,
 } from './services/model.js';
 export type { ToStringOptions, BuilderOf } from './services/model.js';
-export { Tool, getTools, invokeTool, clearTools } from './services/ai.js';
+export {
+  Tool,
+  getTools,
+  invokeTool,
+  clearTools,
+  Validate,
+  Guardrail,
+  Idempotent,
+  Meter,
+  getMetrics,
+  resetMetrics,
+} from './services/ai.js';
+export {
+  Bind,
+  Lazy,
+  Sealed,
+  Mixin,
+  OnChange,
+} from './services/behavior.js';
 export type {
   ToolOptions,
   ToolManifest,
