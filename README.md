@@ -105,6 +105,10 @@ request.
 > sensitive. It cannot mask a secret passed as a positional **primitive**
 > (e.g. `login(rawToken)`) or one embedded in an error message/stack. Pass
 > secrets as named object fields, and don't put them in error messages.
+>
+> `@Secret` field names are registered **process-globally**, so `redact()` masks
+> that field name everywhere — pick distinctive secret field names (`jwtSecret`,
+> not `id`) to avoid over-masking unrelated fields.
 
 ```ts
 import { redact, redactFormat } from '@master4n/decorators';
@@ -245,6 +249,10 @@ const result = invokeTool(new WeatherService(), call.name, call.arguments);
 
 `parameters` is an **explicit** JSON Schema — TypeScript parameter types are
 erased at runtime, so the library does not (and cannot honestly) infer it.
+
+> Tool names live in a **process-global** registry and must be unique — a
+> duplicate name overwrites the earlier one (so `invokeTool` would target the
+> wrong method). Give colliding tools an explicit unique `name`.
 
 ## Observability (method decorators)
 

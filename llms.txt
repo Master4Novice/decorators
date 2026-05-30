@@ -133,6 +133,7 @@ class AppConfig {
   (OpenAI `tools`/`parameters`, Anthropic `input_schema`).
 - `invokeTool(instance, name, args)` — dispatch a model tool call to the method on `instance`.
 - `clearTools()` — clear the registry (tests). Types: `ToolOptions`, `ToolManifest`, `ToolParameters`.
+- Tool names are process-global and must be unique (a duplicate overwrites the earlier entry).
 
 ## Observability (method decorators)
 

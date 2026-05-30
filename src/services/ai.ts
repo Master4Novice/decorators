@@ -43,6 +43,11 @@ const tools = new Map<string, ToolEntry>();
  *
  * The method should accept a single arguments object matching `parameters`.
  *
+ * Tool names are registered in a **process-global** registry and must be unique:
+ * a duplicate name (including two classes relying on the same default method
+ * name) overwrites the earlier entry, so `invokeTool` would dispatch to the
+ * last-registered method. Give colliding tools explicit, unique `name`s.
+ *
  * @example
  * class Weather {
  *   \@Tool({
