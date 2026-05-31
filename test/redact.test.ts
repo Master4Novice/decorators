@@ -61,6 +61,26 @@ describe('redact', () => {
     expect(out.self).toBe('[Circular]');
   });
 
+  it('truncates beyond maxDepth instead of leaking deep secrets', () => {
+    let deep: any = { password: 'LEAKED' };
+    for (let i = 0; i < 20; i++) deep = { nested: deep };
+    const out = JSON.stringify(redact(deep));
+    expect(out).not.toContain('LEAKED');
+    expect(out).toContain('[Truncated]');
+  });
+
+  it('redacts secret keys inside a Map', () => {
+    const m = new Map<string, string>([
+      ['password', 'secret'],
+      ['ok', 'visible'],
+    ]);
+    const out = redact({ data: m }) as unknown as {
+      data: Record<string, unknown>;
+    };
+    expect(out.data.password).toBe('[REDACTED]');
+    expect(out.data.ok).toBe('visible');
+  });
+
   it('passes primitives and Dates through', () => {
     const d = new Date('2024-01-01');
     expect(redact(d)).toBe(d);

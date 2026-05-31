@@ -37,7 +37,8 @@ export interface RedactOptions {
   keys?: string[];
   /** Replacement for redacted values. Default `'[REDACTED]'`. */
   mask?: string;
-  /** Max recursion depth before values pass through untouched. Default 8. */
+  /** Max recursion depth; deeper values are replaced with `'[Truncated]'`
+   * (never passed through raw, so deep secrets can't leak). Default 12. */
   maxDepth?: number;
 }
 
@@ -69,17 +70,28 @@ export function isSensitiveKey(key: string, keySet: Set<string>): boolean {
 export function redact<T>(value: T, options: RedactOptions = {}): T {
   const keySet = buildKeySet(options.keys);
   const mask = options.mask ?? '[REDACTED]';
-  const maxDepth = options.maxDepth ?? 8;
+  const maxDepth = options.maxDepth ?? 12;
   const seen = new WeakSet<object>();
 
   const walk = (val: unknown, depth: number): unknown => {
     if (val === null || typeof val !== 'object') return val;
     if (val instanceof Date || val instanceof RegExp) return val;
     if (seen.has(val)) return '[Circular]';
-    if (depth >= maxDepth) return val;
+    // Beyond max depth, TRUNCATE rather than return the raw value — otherwise a
+    // secret nested deeper than maxDepth would leak through unmasked.
+    if (depth >= maxDepth) return '[Truncated]';
     seen.add(val);
 
     if (Array.isArray(val)) return val.map((item) => walk(item, depth + 1));
+    if (val instanceof Set) return [...val].map((item) => walk(item, depth + 1));
+    if (val instanceof Map) {
+      const fromMap: Record<string, unknown> = {};
+      for (const [k, v] of val) {
+        const key = String(k);
+        fromMap[key] = isSensitiveKey(key, keySet) ? mask : walk(v, depth + 1);
+      }
+      return fromMap;
+    }
 
     const out: Record<string, unknown> = {};
     for (const [key, child] of Object.entries(val)) {

@@ -59,6 +59,9 @@ decorator **families**. First release of all of the following.
 
 ### Fixed
 
+- **Security:** `redact()` no longer leaks values nested beyond `maxDepth` — they
+  are replaced with `'[Truncated]'` instead of returned raw (default depth raised
+  to 12). It now also redacts inside `Map`/`Set`.
 - `@ValidDate` was a no-op in 1.x (its wrapper was clobbered by `__decorate`); it
   is now a proper method decorator that throws on an invalid date.
 - Removed an undeclared `winston` dependency issue and the `uuid` dependency

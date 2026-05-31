@@ -160,6 +160,10 @@ export function Dedupe(
 /**
  * On error, return a fallback instead of throwing. `fallback` may be a value or
  * a function `(error) => value`. Handles sync throws and async rejections.
+ *
+ * Place `@Fallback` **outermost** (top of the stack) so it catches only after
+ * `@Retry`/`@CircuitBreaker`/`@Timeout` have run. Putting it inside them swallows
+ * the error first, so those never see a failure and never retry/trip.
  */
 export function Fallback(
   fallback: unknown | ((error: unknown) => unknown),

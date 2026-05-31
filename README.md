@@ -51,19 +51,25 @@ class SignupDto {
 ### A resilient upstream client (Flow)
 
 ```ts
-import { CircuitBreaker, Retry, Timeout, Cache, Fallback } from '@master4n/decorators';
+import { Fallback, CircuitBreaker, Retry, Timeout, Cache } from '@master4n/decorators';
 
 class UserApi {
+  @Fallback(null)                // OUTERMOST = last resort: catch after everything else
   @CircuitBreaker({ failureThreshold: 5, resetMs: 30_000 })
-  @Retry(3, { delayMs: 200 })
+  @Retry(3, { delayMs: 200 })    // retry the timed call
   @Timeout(5_000)
-  @Cache(60_000)                 // memoize good responses for 60s
-  @Fallback(null)                // never throw to the caller; return null
+  @Cache(60_000)                 // INNERMOST: memoize the actual fetch
   async getUser(id: string) {
     return (await fetch(`/users/${id}`)).json();
   }
 }
 ```
+
+> **Decorator order matters.** Stacks apply **bottom-up**: the decorator nearest
+> the method wraps the original first, and the **top** decorator runs first / sees
+> the final outcome. So put recovery (`@Fallback`) **outermost (top)** — otherwise
+> it swallows the error before `@Retry`/`@CircuitBreaker` ever see a failure, and
+> retries silently never happen.
 
 ### A safe, observable AI tool (Agent + Insight)
 
@@ -113,14 +119,20 @@ const c = builder(Money).amount(50).currency('USD').build();  // typed builder
 ### Less boilerplate (Craft)
 
 ```ts
-import { Bind, Lazy, OnChange } from '@master4n/decorators';
+import { Configured, Bind, Lazy, OnChange } from '@master4n/decorators';
 
+@Configured                                 // required for property decorators under modern TS
 class Editor {
   @Lazy((self) => buildHeavyIndex(self))  index!: Index;   // computed once, on first read
   @OnChange((v) => autosave(v))            content = '';     // reacts to real changes
   @Bind                                    onClick() { return this.content; } // safe to detach
 }
 ```
+
+> `@Lazy` and `@OnChange` are **property** decorators — like all of them, add
+> `@Configured` to the class when you compile with `useDefineForClassFields: true`
+> (the modern default), or they silently no-op (see [TypeScript setup](#typescript-setup)).
+> `@Bind` is a method decorator and needs no `@Configured`.
 
 ## Installation
 
@@ -130,21 +142,31 @@ npm install @master4n/decorators
 
 ## TypeScript setup
 
-Enable legacy (experimental) decorators in your `tsconfig.json`:
+This is a legacy-decorator library. A complete, known-good `tsconfig.json`:
 
 ```json
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   }
 }
 ```
 
-> **No `useDefineForClassFields` requirement.** Put **`@Configured`** on classes
-> that use the injection decorators and they work regardless of your `target` /
-> `useDefineForClassFields` setting. (Without `@Configured`, injection relies on
-> prototype accessors, which only work when `useDefineForClassFields` is `false`.)
+> **The one rule that matters: put `@Configured` on any class that uses a
+> _property_ decorator** (`@Value`/`@Env`/`@Secret`/`@Config`/`@Default`, every
+> Guard like `@Email`/`@Min`/`@Pattern`, every Shape like `@Trim`, and Craft's
+> `@Lazy`/`@OnChange`/`@Readonly`). With modern TS (`useDefineForClassFields: true`,
+> the default for `target >= ES2022`) a class field shadows the decorator's
+> prototype accessor, so **without `@Configured` those decorators silently
+> no-op** — no error, just nothing happens. `@Configured` materializes them as
+> own instance properties so they work under any setting. **Method** and
+> **class** decorators (`@Get`, `@Retry`, `@Bind`, `@Data`, `@Tool`, …) don't
+> need it.
 
 ## Inject — config & value injection (flagship)
 

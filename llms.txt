@@ -43,7 +43,9 @@ thrown error type. `getSecretKeys()` returns `@Secret` property names.
 - `redact(value, { keys?, mask?, maxDepth? })` — deep copy with sensitive values masked.
   Sensitive keys = `@Secret` property names ∪ `DEFAULT_SENSITIVE_KEYS` (password, token,
   apikey, authorization, jwt, ssn, ...) ∪ `keys`. Case/`_`/`-`-insensitive; handles nested
-  objects, arrays, circular refs; passes Date/primitives through. Default mask `[REDACTED]`.
+  objects, arrays, Maps/Sets, circular refs; passes Date/primitives through. Default mask
+  `[REDACTED]`. Beyond `maxDepth` (default 12) values become `'[Truncated]'` — never raw, so
+  deep secrets can't leak.
 - `redactFormat({ ... })` — a winston format that masks sensitive log fields. The package
   logger already uses it; add it to your own `winston.format.combine(...)`.
 - `DEFAULT_SENSITIVE_KEYS` — the built-in sensitive key list.
@@ -127,6 +129,9 @@ class AppConfig {
 - `@Debounce(ms)` — void/fire-and-forget methods only; trailing-edge.
 - `@Throttle(ms)` — void/fire-and-forget methods only; leading-edge.
 - Errors: `TimeoutError`, `RateLimitError`, `CircuitOpenError`.
+- ORDER MATTERS: stacks apply bottom-up; the top decorator runs first / sees the final outcome.
+  Put recovery (`@Fallback`) OUTERMOST (top), above `@Retry`/`@CircuitBreaker`/`@Timeout` — placed
+  inside them it swallows the error first and retries never happen.
 
 ## Model — data-class decorators
 
