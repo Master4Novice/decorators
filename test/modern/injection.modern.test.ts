@@ -11,7 +11,8 @@ jest.mock('config', () => ({
   default: { get: (key: string) => mockGet(key) },
 }));
 
-import { Value, Env, Default, Configured } from '../../src/services/injection.js';
+import { Env, Default, Configured } from '../../src/services/injection.js';
+import { Value } from '../../src/config.js';
 
 beforeEach(() => {
   mockGet.mockReset();

@@ -1,4 +1,3 @@
-import config from 'config';
 import { ensureEnvLoaded } from '../utilities/env.js';
 
 /**
@@ -128,7 +127,12 @@ function coerce(raw: unknown, sample: unknown): unknown {
   return raw;
 }
 
-function makeDecorator(resolve: () => unknown) {
+/**
+ * Build an injection decorator from a value resolver. Exported for the optional
+ * `@master4n/decorators/config` subpath (the node-config-backed `@Value`/`@Config`),
+ * so those decorators register against this same singleton registry.
+ */
+export function makeDecorator(resolve: () => unknown) {
   return function (target: object, propertyKey: string | symbol): void {
     register(target, {
       key: propertyKey,
@@ -136,36 +140,6 @@ function makeDecorator(resolve: () => unknown) {
     });
     definePrototypeAccessor(target, propertyKey, resolve);
   };
-}
-
-/**
- * Inject a value read from your config files (YAML/JSON via `node-config`).
- *
- * Replaces a manual `config.get(...)` + try/catch + default-fallback block.
- *
- * @param key   dotted config path, e.g. `"db.url"`.
- * @param fallback default used when the key is missing. If omitted entirely,
- *   a missing key throws {@link MissingConfigError} (fail loud at startup).
- *
- * @example
- * \@Configured
- * class DbConfig {
- *   \@Value('db.url', 'sqlite://memory') url!: string;
- *   \@Value('db.poolSize') poolSize!: number; // required: throws if absent
- * }
- */
-export function Value(key: string, fallback?: unknown) {
-  const hasFallback = arguments.length > 1;
-  return makeDecorator(() => {
-    try {
-      return config.get(key);
-    } catch {
-      if (hasFallback) return fallback;
-      throw new MissingConfigError(
-        `@Value: config key "${key}" is missing and no default was provided.`,
-      );
-    }
-  });
 }
 
 /**
@@ -201,8 +175,9 @@ export function Env(name: string, fallback?: unknown) {
 
 /**
  * Like {@link Env}, but marks the property name as a secret so it is redacted by
- * `redact()` and the `redactFormat()` winston format (used by this package's
- * logger). The value is read from `process.env` exactly like `@Env`.
+ * `redact()` and the `redactFormat()` winston format (from the optional
+ * `@master4n/decorators/winston` subpath). The value is read from `process.env`
+ * exactly like `@Env`.
  *
  * @example
  * \@Configured
@@ -231,22 +206,6 @@ export function Secret(name: string, fallback?: unknown) {
     });
     definePrototypeAccessor(target, propertyKey, resolve);
   };
-}
-
-/**
- * Inject a config subtree/object by path (required). Useful for grabbing a
- * whole section, e.g. `@Config('redis') redis!: RedisOptions`.
- */
-export function Config(path: string) {
-  return makeDecorator(() => {
-    try {
-      return config.get(path);
-    } catch {
-      throw new MissingConfigError(
-        `@Config: config path "${path}" is missing.`,
-      );
-    }
-  });
 }
 
 /**

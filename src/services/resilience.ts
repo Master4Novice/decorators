@@ -3,6 +3,7 @@ import {
   RateLimitError,
   CircuitOpenError,
 } from './errors.js';
+import { stableKey } from '../utilities/stable-key.js';
 
 function isPromise(value: unknown): value is Promise<unknown> {
   return (
@@ -97,10 +98,28 @@ export function Once(
 }
 
 /**
- * Memoize results with a time-to-live, per instance, keyed by the JSON of the
- * arguments. (Use `@Memoize` for a permanent cache; `@Cache(ttl)` expires.)
+ * Memoize results with a time-to-live, per instance. (Use `@Memoize` for a
+ * permanent cache; `@Cache(ttl)` expires.)
+ *
+ * - Keys are stable (argument-object key order doesn't matter; `BigInt`/circular
+ *   args don't throw). Override with `options.keyFn` for custom keying.
+ * - A rejected promise is **not** cached — the entry is removed on rejection so
+ *   one failure isn't replayed to every caller for the rest of the TTL window.
+ * - `options.maxSize` caps entries per instance with LRU eviction, bounding
+ *   memory for large/unbounded key spaces. Expired entries are also dropped on
+ *   access.
+ *
+ * @example
+ * class Api {
+ *   \@Cache(60_000, { maxSize: 500 })
+ *   async user(id: string) { ... }
+ * }
  */
-export function Cache(ttlMs: number): MethodDecorator {
+export function Cache(
+  ttlMs: number,
+  options: { maxSize?: number; keyFn?: (...args: any[]) => string } = {},
+): MethodDecorator {
+  const maxSize = options.maxSize;
   return (_t, methodName, descriptor) => {
     const caches = new WeakMap<object, Map<string, { value: unknown; expires: number }>>();
     return wrap(
@@ -112,11 +131,34 @@ export function Cache(ttlMs: number): MethodDecorator {
             cache = new Map();
             caches.set(this, cache);
           }
-          const key = JSON.stringify(args);
+          const key = options.keyFn
+            ? String(options.keyFn.apply(this, args))
+            : stableKey(args);
           const hit = cache.get(key);
-          if (hit && hit.expires > Date.now()) return hit.value;
+          if (hit) {
+            if (hit.expires > Date.now()) {
+              // LRU touch: re-insert so this key is the most-recently used.
+              cache.delete(key);
+              cache.set(key, hit);
+              return hit.value;
+            }
+            cache.delete(key); // expired
+          }
           const value = original.apply(this, args);
-          cache.set(key, { value, expires: Date.now() + ttlMs });
+          const entry = { value, expires: Date.now() + ttlMs };
+          cache.set(key, entry);
+          // Don't cache a rejected promise (only delete if it's still this entry).
+          if (isPromise(value)) {
+            value.catch(() => {
+              if (cache!.get(key) === entry) cache!.delete(key);
+            });
+          }
+          // Bound memory: evict the least-recently-used entry (Map iteration is
+          // insertion-order; LRU touches above keep fresh keys at the end).
+          if (maxSize !== undefined && cache.size > maxSize) {
+            const oldest = cache.keys().next().value;
+            if (oldest !== undefined) cache.delete(oldest);
+          }
           return value;
         },
       methodName,
@@ -144,7 +186,7 @@ export function Dedupe(
           byKey = new Map();
           inflight.set(this, byKey);
         }
-        const key = JSON.stringify(args);
+        const key = stableKey(args);
         const existing = byKey.get(key);
         if (existing) return existing;
         const result = original.apply(this, args);

@@ -4,6 +4,74 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] — 2026-06-01
+
+Hardening of the caching/idempotency decorators (`@Cache`, `@Memoize`, `@Dedupe`,
+`@Idempotent`). Behaviour-compatible for existing valid usage.
+
+### Fixed
+
+- **Stable cache keys.** All four now key with a deterministic serializer instead
+  of `JSON.stringify(args)`: argument-object key order no longer matters (no more
+  silent cache misses for `{a,b}` vs `{b,a}`), and `BigInt`/circular args no
+  longer throw.
+- **`@Cache` no longer caches failures.** A rejected promise was kept for the
+  whole TTL and replayed to every caller; it's now evicted on rejection.
+- **`@Memoize` no longer memoizes a rejected promise** permanently — the slot is
+  cleared on rejection so a transient async failure isn't cached forever.
+
+### Added
+
+- **`@Cache(ttlMs, { maxSize?, keyFn? })`** — optional LRU `maxSize` to bound
+  memory, and a custom `keyFn`. Expired entries are also dropped on access.
+- **`@Idempotent(keyFn?, { maxSize? })`** — optional LRU `maxSize`.
+- Documented `@Meter`'s process-global, name-keyed registry (metrics aggregate
+  across instances unless you pass distinct names).
+
+## [2.0.3] — 2026-05-31
+
+Dependency hygiene: the core is now **zero-dependency**. Previously, importing the
+package pulled in `winston`, `config`, and `js-yaml` transitively (and node-config
+ran an eager filesystem scan + warning on import).
+
+> **Note:** the import-path moves below are technically breaking for anyone who
+> relied on transitive installs of `winston`/`config` or imported `@Value` /
+> `@Config` / `redactFormat` from the package root. Update imports per
+> `MIGRATION.md`.
+
+### Removed
+
+- **`js-yaml`** — was declared as a runtime dependency but never imported. Dropped.
+
+### Changed (breaking)
+
+- **`winston` and `config` are now optional `peerDependencies`** instead of hard
+  runtime dependencies. The main entry point imports neither, so a plain
+  `import ... from '@master4n/decorators'` adds no third-party packages.
+- **`@Value` and `@Config`** (the only node-config-backed decorators) moved to the
+  subpath **`@master4n/decorators/config`**. Install `config` to use them.
+  ```diff
+  - import { Configured, Value, Config } from '@master4n/decorators';
+  + import { Configured } from '@master4n/decorators';
+  + import { Value, Config } from '@master4n/decorators/config';
+  ```
+- **`redactFormat`** (the winston `format`) moved to the subpath
+  **`@master4n/decorators/winston`**. Install `winston` to use it. `redact()`
+  itself stays on the main entry and remains dependency-free.
+  ```diff
+  - import { redact, redactFormat } from '@master4n/decorators';
+  + import { redact } from '@master4n/decorators';
+  + import { redactFormat } from '@master4n/decorators/winston';
+  ```
+- The internal logger used by `@Log`/`@Trace`/`@Audit`/`@Measure` no longer uses
+  winston; it writes structured lines to the console (still redaction-aware).
+  Default level is `info`; override with `DECORATORS_LOG_LEVEL`.
+
+> All decorators still share one process-global injection registry: the subpaths
+> are bundled with code-splitting into a shared chunk, so `@Secret` marked on a
+> field is still seen by `redactFormat`, and `@Value` still composes with
+> `@Configured`. See `MIGRATION.md`.
+
 ## [2.0.2] — 2026-05-31
 
 Fixes from a third independent review.

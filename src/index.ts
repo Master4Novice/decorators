@@ -1,13 +1,14 @@
 export {
-  Value,
   Env,
   Secret,
-  Config,
   Default,
   Configured,
   MissingConfigError,
   getSecretKeys,
 } from './services/injection.js';
+// Note: the node-config-backed `@Value` and `@Config` decorators now live in the
+// optional subpath `@master4n/decorators/config` (node-config is an optional peer
+// dependency). See MIGRATION.md.
 export {
   GenerateID,
   NotNull,
@@ -161,9 +162,8 @@ export type {
   ToolParameters,
 } from './services/ai.js';
 export { loadEnv, parseEnv } from './utilities/env.js';
-export {
-  redact,
-  redactFormat,
-  DEFAULT_SENSITIVE_KEYS,
-} from './utilities/redact.js';
+export { redact, DEFAULT_SENSITIVE_KEYS } from './utilities/redact.js';
 export type { RedactOptions } from './utilities/redact.js';
+// Note: `redactFormat` (a winston `format`) now lives in the optional subpath
+// `@master4n/decorators/winston` (winston is an optional peer dependency).
+// See MIGRATION.md.

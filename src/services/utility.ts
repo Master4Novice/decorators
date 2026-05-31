@@ -1,4 +1,5 @@
 import { logger } from '../utilities/logger.js';
+import { stableKey } from '../utilities/stable-key.js';
 
 function isPromise(value: unknown): value is Promise<unknown> {
   return (
@@ -66,8 +67,17 @@ export function Retry(attempts = 3, options: { delayMs?: number } = {}) {
 }
 
 /**
- * Method decorator: memoize results keyed by the JSON of the arguments, per
- * instance. Removes hand-rolled caching maps. Best for pure, cheap-to-key methods.
+ * Method decorator: memoize results keyed by the arguments, per instance.
+ * Removes hand-rolled caching maps. Best for pure, cheap-to-key methods over a
+ * **bounded** set of inputs.
+ *
+ * - Keys are built with a stable serializer, so argument-object key order does
+ *   not matter and `BigInt`/circular args don't throw.
+ * - A rejected promise is **not** kept — the slot is cleared on rejection so a
+ *   transient async failure isn't memoized forever (the next call retries).
+ * - The cache is **unbounded** by design (permanent memoization). For an
+ *   unbounded/large key space, prefer `@Cache(ttlMs)` which expires and can be
+ *   size-capped.
  *
  * @example
  * class Calc {
@@ -89,10 +99,12 @@ export function Memoize(
       cache = new Map();
       caches.set(this, cache);
     }
-    const key = JSON.stringify(args);
+    const key = stableKey(args);
     if (cache.has(key)) return cache.get(key);
     const result = original.apply(this, args);
     cache.set(key, result);
+    // Don't memoize a failure permanently: drop the slot if the promise rejects.
+    if (isPromise(result)) result.catch(() => cache!.delete(key));
     return result;
   };
 

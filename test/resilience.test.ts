@@ -80,6 +80,59 @@ describe('@Cache', () => {
     jest.advanceTimersByTime(45);
     expect(c.now()).toBe(2);
   });
+
+  it('uses a stable key: argument-object key order does not matter', () => {
+    class C {
+      calls = 0;
+      @Cache(1000)
+      lookup(opts: { a: number; b: number }) {
+        this.calls++;
+        return this.calls;
+      }
+    }
+    const c = new C();
+    expect(c.lookup({ a: 1, b: 2 })).toBe(1);
+    expect(c.lookup({ b: 2, a: 1 })).toBe(1); // same logical args → cache hit
+    expect(c.calls).toBe(1);
+  });
+
+  it('does not cache a rejected promise (failure is not replayed for the TTL)', async () => {
+    jest.useRealTimers();
+    class C {
+      calls = 0;
+      @Cache(10_000)
+      async load() {
+        this.calls++;
+        if (this.calls === 1) throw new Error('boom');
+        return 'ok';
+      }
+    }
+    const c = new C();
+    await expect(c.load()).rejects.toThrow('boom');
+    await expect(c.load()).resolves.toBe('ok'); // retried, not the cached rejection
+    expect(c.calls).toBe(2);
+  });
+
+  it('evicts the least-recently-used entry when maxSize is exceeded', () => {
+    class C {
+      calls = 0;
+      @Cache(10_000, { maxSize: 2 })
+      sq(n: number) {
+        this.calls++;
+        return n * n;
+      }
+    }
+    const c = new C();
+    c.sq(1); // {1}
+    c.sq(2); // {1,2}
+    c.sq(1); // touch 1 → LRU order now [2,1]
+    c.sq(3); // size>2 → evict 2 → {1,3}
+    expect(c.calls).toBe(3);
+    c.sq(1); // still cached
+    expect(c.calls).toBe(3);
+    c.sq(2); // was evicted → recompute
+    expect(c.calls).toBe(4);
+  });
 });
 
 describe('@Dedupe', () => {

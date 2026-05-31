@@ -79,6 +79,37 @@ describe('@Memoize', () => {
     expect(c.square(5)).toBe(25);
     expect(c.calls).toBe(2);
   });
+
+  it('keys stably regardless of argument-object key order', () => {
+    class Calc {
+      calls = 0;
+      @Memoize
+      area(o: { w: number; h: number }) {
+        this.calls++;
+        return o.w * o.h;
+      }
+    }
+    const c = new Calc();
+    expect(c.area({ w: 2, h: 3 })).toBe(6);
+    expect(c.area({ h: 3, w: 2 })).toBe(6); // same logical args → memo hit
+    expect(c.calls).toBe(1);
+  });
+
+  it('does not memoize a rejected promise', async () => {
+    class Calc {
+      calls = 0;
+      @Memoize
+      async load() {
+        this.calls++;
+        if (this.calls === 1) throw new Error('boom');
+        return 'ok';
+      }
+    }
+    const c = new Calc();
+    await expect(c.load()).rejects.toThrow('boom');
+    await expect(c.load()).resolves.toBe('ok'); // slot cleared after rejection
+    expect(c.calls).toBe(2);
+  });
 });
 
 describe('@Deprecated', () => {

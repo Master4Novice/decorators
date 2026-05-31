@@ -1,4 +1,5 @@
 import { ValidationError, GuardrailError } from './errors.js';
+import { stableKey } from '../utilities/stable-key.js';
 
 function isPromise(value: unknown): value is Promise<unknown> {
   return (
@@ -227,13 +228,22 @@ export function Guardrail<R = unknown>(
  * unlike `@Cache` there's no TTL, and unlike `@Dedupe` it persists past the
  * in-flight window. Failed async calls are not cached.
  *
- * @param keyFn derive the key from the args (default: JSON of the args).
+ * @param keyFn derive the key from the args (default: a stable serialization of
+ *   the args — argument-object key order doesn't matter and `BigInt`/circular
+ *   args don't throw).
+ * @param options.maxSize cap stored results per instance with LRU eviction
+ *   (bounds memory; unbounded by default since idempotency keys are usually
+ *   finite, e.g. request IDs).
  *
  * @example
- * \@Idempotent((req) => req.requestId)
+ * \@Idempotent((req) => req.requestId, { maxSize: 10_000 })
  * async charge(req: { requestId: string; amount: number }) { ... }
  */
-export function Idempotent(keyFn?: (...args: any[]) => string) {
+export function Idempotent(
+  keyFn?: (...args: any[]) => string,
+  options: { maxSize?: number } = {},
+) {
+  const maxSize = options.maxSize;
   return function (
     _t: any,
     _methodName: string,
@@ -247,11 +257,21 @@ export function Idempotent(keyFn?: (...args: any[]) => string) {
         store = new Map();
         stores.set(this, store);
       }
-      const key = keyFn ? String(keyFn.apply(this, args)) : JSON.stringify(args);
-      if (store.has(key)) return store.get(key);
+      const key = keyFn ? String(keyFn.apply(this, args)) : stableKey(args);
+      if (store.has(key)) {
+        // LRU touch so the most-recently-used key survives eviction.
+        const cached = store.get(key);
+        store.delete(key);
+        store.set(key, cached);
+        return cached;
+      }
       const result = original.apply(this, args);
       store.set(key, result);
       if (isPromise(result)) result.catch(() => store!.delete(key));
+      if (maxSize !== undefined && store.size > maxSize) {
+        const oldest = store.keys().next().value;
+        if (oldest !== undefined) store.delete(oldest);
+      }
       return result;
     };
     return descriptor;
@@ -271,6 +291,11 @@ const meters = new Map<string, { calls: number; errors: number; totalMs: number 
  * Method decorator: record call count, error count, and timing under `name`
  * (default: the method name). Read it back with {@link getMetrics} — handy for
  * an agent to see how often and how expensively each tool is used. Sync/async.
+ *
+ * Metrics live in a **process-global** registry keyed by `name`, so every
+ * instance of the class — and any other method that resolves to the same name —
+ * aggregates into the same bucket. Give distinct, explicit `name`s to methods
+ * you want metered separately (especially when two classes share a method name).
  */
 export function Meter(name?: string) {
   return function (

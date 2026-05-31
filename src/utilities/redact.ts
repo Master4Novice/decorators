@@ -1,4 +1,3 @@
-import winston from 'winston';
 import { getSecretKeys } from '../services/injection.js';
 
 /**
@@ -42,7 +41,7 @@ export interface RedactOptions {
   maxDepth?: number;
 }
 
-const normalize = (key: string): string =>
+export const normalize = (key: string): string =>
   key.toLowerCase().replace(/[_-]/g, '');
 
 // Strong secret "stems": if a normalized key CONTAINS one of these, it's treated
@@ -61,7 +60,7 @@ const SENSITIVE_STEMS = [
   'jwt',
 ];
 
-function buildKeySet(extra?: string[]): Set<string> {
+export function buildKeySet(extra?: string[]): Set<string> {
   const set = new Set<string>();
   for (const k of DEFAULT_SENSITIVE_KEYS) set.add(normalize(k));
   for (const k of getSecretKeys()) set.add(normalize(k)); // @Secret-marked fields
@@ -120,39 +119,4 @@ export function redact<T>(value: T, options: RedactOptions = {}): T {
   };
 
   return walk(value, 0) as T;
-}
-
-// Standard winston log-entry keys that must not be treated as redactable meta.
-const RESERVED_LOG_KEYS = new Set([
-  'level',
-  'message',
-  'timestamp',
-  'label',
-  'stack',
-  'splat',
-]);
-
-/**
- * A winston format that redacts sensitive fields from log metadata. Add it to
- * your logger's `format.combine(...)` so structured fields like `password` or
- * any `@Secret` property never reach your transports in clear text.
- *
- * The package's own logger already uses this.
- *
- * @example
- * winston.createLogger({ format: winston.format.combine(redactFormat(), ...) });
- */
-export function redactFormat(options: RedactOptions = {}) {
-  return winston.format((info) => {
-    const keySet = buildKeySet(options.keys);
-    const mask = options.mask ?? '[REDACTED]';
-    for (const key of Object.keys(info)) {
-      if (RESERVED_LOG_KEYS.has(key)) continue;
-      const entry = info as Record<string, unknown>;
-      entry[key] = isSensitiveKey(key, keySet)
-        ? mask
-        : redact(entry[key], options);
-    }
-    return info;
-  })();
 }

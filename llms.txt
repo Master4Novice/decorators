@@ -23,12 +23,14 @@ uses prototype accessors that only work when `useDefineForClassFields` is `false
 ## Config & value injection (flagship)
 
 - `@Value(key: string, default?)` — value from config files (YAML/JSON via node-config).
-  Required (throws `MissingConfigError`) when no default is passed.
+  Required (throws `MissingConfigError`) when no default is passed. IMPORT FROM SUBPATH
+  `@master4n/decorators/config` (node-config is an optional peer dependency).
 - `@Env(name: string, default?)` — value from `process.env`, coerced to the type of
   the default (number, boolean, comma-split array). Required when no default.
 - `@Secret(name: string, default?)` — like `@Env`; marks the property name as secret so
   `redact()` / `redactFormat()` (and the package logger) mask it. `getSecretKeys()` lists them.
-- `@Config(path: string)` — inject a whole config subtree/object (required).
+- `@Config(path: string)` — inject a whole config subtree/object (required). IMPORT FROM
+  SUBPATH `@master4n/decorators/config` (node-config is an optional peer dependency).
 - `@Default(value)` — inject a literal constant.
 - `@Configured` — class decorator; materializes the above as own instance properties
   at construction. Required values resolve eagerly → misconfig fails at startup.
@@ -46,8 +48,9 @@ thrown error type. `getSecretKeys()` returns `@Secret` property names.
   objects, arrays, Maps/Sets, circular refs; passes Date/primitives through. Default mask
   `[REDACTED]`. Beyond `maxDepth` (default 12) values become `'[Truncated]'` — never raw, so
   deep secrets can't leak.
-- `redactFormat({ ... })` — a winston format that masks sensitive log fields. The package
-  logger already uses it; add it to your own `winston.format.combine(...)`.
+- `redactFormat({ ... })` — a winston format that masks sensitive log fields. IMPORT FROM
+  SUBPATH `@master4n/decorators/winston` (winston is an optional peer dependency). Add it to
+  your own `winston.format.combine(...)`. `redact()` is on the main entry and dependency-free.
 - `DEFAULT_SENSITIVE_KEYS` — the built-in sensitive key list.
 
 Note: `@Env`/`@Secret` read `process.env`. Node does not auto-load `.env` files;
@@ -56,7 +59,8 @@ Note: `@Env`/`@Secret` read `process.env`. Node does not auto-load `.env` files;
 ### Example
 
 ```ts
-import { Configured, Value, Env, Secret } from '@master4n/decorators';
+import { Configured, Env, Secret } from '@master4n/decorators';
+import { Value } from '@master4n/decorators/config'; // optional peer: node-config
 
 @Configured
 class AppConfig {
@@ -111,7 +115,7 @@ class AppConfig {
   arguments, `{ result?: boolean }` logs the redacted return value, `{ level? }` sets the log
   level, `{ redact? }` passes RedactOptions. Args/result are masked via `redact()`. Async-aware.
 - `@Retry(attempts=3, { delayMs? })` (method) — retries on failure; sync and async.
-- `@Memoize` (method) — caches results by JSON of args, per instance (never expires).
+- `@Memoize` (method) — caches results by a stable arg key, per instance (never expires); a rejected promise is not memoized.
 - `@Deprecated(message?)` (method) — logs a one-time deprecation warning.
 - `@Measure` (method) — logs execution time; sync and async.
 
@@ -119,8 +123,8 @@ class AppConfig {
 
 - `@Timeout(ms, { message? })` — async only; rejects with `TimeoutError` if not settled in ms.
 - `@Once` — run once per instance; cache result forever (args ignored).
-- `@Cache(ttlMs)` — memoize per instance keyed by args, expiring after ttlMs.
-- `@Dedupe` — single-flight: identical concurrent async calls share one promise.
+- `@Cache(ttlMs, { maxSize?, keyFn? })` — memoize per instance, stable arg key, expiring after ttlMs. `maxSize` bounds memory (LRU); rejected promises are not cached.
+- `@Dedupe` — single-flight: identical concurrent async calls share one promise (stable arg key).
 - `@Fallback(valueOrFn)` — on sync throw / async reject, return the fallback (fn gets the error).
 - `@RateLimit(limit, intervalMs)` — throws/rejects `RateLimitError` past limit calls per window.
 - `@Concurrency(max)` — cap concurrent async executions per instance; queue the rest (returns promise).
@@ -181,10 +185,12 @@ status; thrown errors -> next(err); inject `@Res()` to own the response.
   before the method runs. Guards LLM-tool inputs.
 - `@Guardrail(check, { retries?, message? })` — validate the (awaited) output; retry up to `retries`,
   else throw `GuardrailError`. Sync/async. Verifies model output.
-- `@Idempotent(keyFn?)` — cache result by idempotency key (per instance); repeat calls return the
-  stored result. No TTL (vs @Cache); persists past in-flight (vs @Dedupe); failed async not cached.
+- `@Idempotent(keyFn?, { maxSize? })` — cache result by idempotency key (per instance); repeat calls
+  return the stored result. Default key is a stable arg serialization. No TTL (vs @Cache); persists
+  past in-flight (vs @Dedupe); failed async not cached; `maxSize` bounds memory (LRU).
 - `@Meter(name?)` — record calls/errors/timing; `getMetrics()` returns `{ [name]: { calls, errors,
-  totalMs, avgMs } }`; `resetMetrics()` clears. Sync/async.
+  totalMs, avgMs } }`; `resetMetrics()` clears. Sync/async. Registry is process-global, keyed by
+  `name` — metrics aggregate across instances unless you pass distinct names.
 
 ## Craft — class & method ergonomics
 

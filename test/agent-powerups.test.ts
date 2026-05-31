@@ -92,6 +92,27 @@ describe('@Idempotent', () => {
     await expect(s.run()).rejects.toThrow('fail');
     expect(s.calls).toBe(2);
   });
+
+  it('evicts the least-recently-used key when maxSize is exceeded', () => {
+    class S {
+      calls = 0;
+      @Idempotent((n: number) => String(n), { maxSize: 2 })
+      compute(n: number) {
+        this.calls++;
+        return n;
+      }
+    }
+    const s = new S();
+    s.compute(1); // {1}
+    s.compute(2); // {1,2}
+    s.compute(1); // touch 1 → order [2,1]
+    s.compute(3); // evict 2 → {1,3}
+    expect(s.calls).toBe(3);
+    s.compute(1); // cached
+    expect(s.calls).toBe(3);
+    s.compute(2); // evicted → recompute
+    expect(s.calls).toBe(4);
+  });
 });
 
 describe('@Meter', () => {

@@ -140,6 +140,14 @@ class Editor {
 npm install @master4n/decorators
 ```
 
+The core has **zero runtime dependencies**. Two features are gated behind
+optional peer dependencies — install them only if you use those features:
+
+```sh
+npm i config    # for @Value / @Config from "@master4n/decorators/config"
+npm i winston   # for redactFormat from "@master4n/decorators/winston"
+```
+
 ## TypeScript setup
 
 This is a legacy-decorator library. A complete, known-good `tsconfig.json`:
@@ -190,7 +198,8 @@ class DbConfig {
 
 ```ts
 // AFTER — declarative, coerced, and fails loud on missing required keys:
-import { Configured, Value, Env, Secret } from '@master4n/decorators';
+import { Configured, Env, Secret } from '@master4n/decorators';
+import { Value } from '@master4n/decorators/config'; // node-config-backed
 
 @Configured
 class DbConfig {
@@ -201,6 +210,12 @@ class DbConfig {
 }
 ```
 
+> **Zero runtime dependencies.** The main entry point pulls in no third-party
+> packages. The two decorators that read config files — `@Value`/`@Config` — live
+> in the `@master4n/decorators/config` subpath and require [`node-config`] as an
+> **optional peer dependency** (`npm i config`). Everything else, including
+> `@Env`/`@Secret`, is dependency-free.
+>
 > **Sources:** `@Value`/`@Config` read YAML/JSON via [`node-config`]; `@Env`/`@Secret`
 > read `process.env`. Node does **not** load `.env` files automatically — if you keep
 > config in a `.env` file, load it first (`node --env-file=.env ...` or the `dotenv`
@@ -233,8 +248,10 @@ request.
   `userPassword` are masked too. Nested objects, arrays, `Map`/`Set`, and
   circular references are handled; values past `maxDepth` (12) become
   `'[Truncated]'` so deep secrets can't leak.
-- `redactFormat(options?)` is a winston format. This package's own logger already
-  uses it; add it to your logger's `format.combine(...)` to protect your logs too.
+- `redactFormat(options?)` is a winston format, exported from the optional
+  `@master4n/decorators/winston` subpath (winston is an **optional peer
+  dependency**). Add it to your logger's `format.combine(...)` to protect your
+  logs too. `redact()` itself is dependency-free and lives on the main entry.
 
 > **Redaction is key-based** — it masks object *fields* whose **name** is
 > sensitive. It cannot mask a secret passed as a positional **primitive**
@@ -246,14 +263,15 @@ request.
 > not `id`) to avoid over-masking unrelated fields.
 
 ```ts
-import { redact, redactFormat } from '@master4n/decorators';
+import { redact } from '@master4n/decorators';
+import { redactFormat } from '@master4n/decorators/winston'; // optional peer: winston
 import winston from 'winston';
-
-logger.info('Loaded config', redact(appConfig)); // jwtSecret -> [REDACTED]
 
 const logger = winston.createLogger({
   format: winston.format.combine(redactFormat(), winston.format.json()),
 });
+
+logger.info('Loaded config', redact(appConfig)); // jwtSecret -> [REDACTED]
 ```
 
 ## Guard & Shield — validation & access
@@ -356,7 +374,7 @@ class Account {
 | `@Counter`         | static property | auto-incrementing counter on each read.                |
 | `@Log(opts?)`      | method          | logs entry/exit; `{ args, result }` also log **redacted** args/return; `{ level }` sets the level. |
 | `@Retry(n, opts?)` | method          | retries on failure (sync/async); `opts.delayMs` for async. |
-| `@Memoize`         | method          | caches results by argument JSON, per instance.         |
+| `@Memoize`         | method          | caches results by a stable arg key, per instance; failures aren't memoized. |
 | `@Deprecated(msg)` | method          | logs a one-time deprecation warning.                   |
 | `@Measure`         | method          | logs execution time (sync/async).                      |
 
@@ -478,8 +496,8 @@ and measured:
 | ------------------------ | -------------------------------------------------------------------- |
 | `@Validate(check)`       | reject bad **input** args before running (throws `ValidationError`). |
 | `@Guardrail(check, opts?)` | verify the **output**; retry up to `opts.retries`, else `GuardrailError`. |
-| `@Idempotent(keyFn?)`    | cache the result by an idempotency key — safe to retry (no TTL; failures aren't cached). |
-| `@Meter(name?)`          | record calls / errors / timing; read with `getMetrics()`.            |
+| `@Idempotent(keyFn?, { maxSize? })` | cache the result by an idempotency key — safe to retry (no TTL; failures aren't cached). `maxSize` bounds memory (LRU). |
+| `@Meter(name?)`          | record calls / errors / timing; read with `getMetrics()`. Metrics are **process-global**, keyed by `name` — use distinct names to meter separately. |
 
 ## Craft — class & method ergonomics
 
@@ -519,7 +537,7 @@ class OrderService {
 | -------------------------- | ----------------------------------------------------------------- |
 | `@Timeout(ms)`             | reject an **async** method with `TimeoutError` if it exceeds `ms`. |
 | `@Once`                    | run once per instance; cache that result forever.                 |
-| `@Cache(ttlMs)`            | memoize with a TTL (vs `@Memoize`, which never expires).          |
+| `@Cache(ttlMs, { maxSize?, keyFn? })` | memoize with a TTL (vs `@Memoize`, which never expires). `maxSize` bounds memory (LRU); rejected promises aren't cached. |
 | `@Dedupe`                  | coalesce concurrent identical **async** calls (single-flight).    |
 | `@Fallback(value\|fn)`     | on error, return a fallback instead of throwing (sync/async).     |
 | `@RateLimit(limit, ms)`    | throw `RateLimitError` past `limit` calls per rolling `ms`.        |

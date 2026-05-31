@@ -1,15 +1,5 @@
-import { jest } from '@jest/globals';
-
-jest.mock('config', () => ({
-  __esModule: true,
-  default: { get: () => undefined },
-}));
-
-import {
-  redact,
-  redactFormat,
-  DEFAULT_SENSITIVE_KEYS,
-} from '../src/utilities/redact.js';
+import { redact, DEFAULT_SENSITIVE_KEYS } from '../src/utilities/redact.js';
+import { redactFormat } from '../src/winston.js';
 import { Secret, Configured } from '../src/services/injection.js';
 
 describe('redact', () => {
