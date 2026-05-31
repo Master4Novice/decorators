@@ -64,6 +64,9 @@ export function Pattern(regex: RegExp, options: PatternOptions = {}) {
             `@Pattern: value for "${String(propertyKey)}" exceeds maxLength ${options.maxLength}.`,
         );
       }
+      // Reset lastIndex so a global/sticky (/g, /y) regex doesn't give
+      // stateful, alternating results across assignments.
+      regex.lastIndex = 0;
       if (!regex.test(candidate)) {
         throw new ValidationError(
           options.message ??

@@ -532,10 +532,10 @@ class OrderService {
 import { Timeout, Retry, CircuitBreaker, Fallback } from '@master4n/decorators';
 
 class Upstream {
+  @Fallback(null)               // OUTERMOST = last resort (see ordering note above)
   @CircuitBreaker({ failureThreshold: 5, resetMs: 30_000 })
   @Retry(3, { delayMs: 200 })
   @Timeout(5_000)
-  @Fallback(null)               // last resort: return null instead of throwing
   async fetchUser(id: string) { /* ... */ }
 }
 ```

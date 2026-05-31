@@ -330,10 +330,10 @@ export function Debounce(ms: number): MethodDecorator {
         function (this: object, ...args: any[]): void {
           const prev = timers.get(this);
           if (prev) clearTimeout(prev);
-          timers.set(
-            this,
-            setTimeout(() => original.apply(this, args), ms),
-          );
+          const timer = setTimeout(() => original.apply(this, args), ms);
+          // Don't keep the event loop alive just for a pending debounce.
+          (timer as { unref?: () => void }).unref?.();
+          timers.set(this, timer);
         },
       methodName,
     );

@@ -74,6 +74,20 @@ describe('@Pattern (standalone)', () => {
     }).toThrow(ValidationError);
   });
 
+  it('is not stateful with a global (/g) regex', () => {
+    class C {
+      @Pattern(/\d+/g) code!: string;
+    }
+    const c = new C();
+    // Without resetting lastIndex, a /g regex alternates true/false across calls.
+    for (let i = 0; i < 4; i++) {
+      expect(() => {
+        c.code = '123';
+      }).not.toThrow();
+    }
+    expect(c.code).toBe('123');
+  });
+
   it('rejects non-string values without coerce', () => {
     class User {
       @Pattern(/^\d+$/) code!: string;

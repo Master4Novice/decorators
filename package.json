@@ -1,6 +1,6 @@
 {
   "name": "@master4n/decorators",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "AI-friendly TypeScript decorators for Node/backend apps, in ten families: Inject (config & value injection), Guard (validation), Shape (transforms), Shield (access control & secret redaction), Flow (resilience — retry/timeout/circuit-breaker/rate-limit/cache), Insight (observability), Model (data classes), Route (Express REST controllers), Agent (LLM tools, guardrails, idempotency), and Craft (class/method ergonomics). One decorator replaces a block of code.",
   "main": "./dist/commonjs/index.cjs",
   "module": "./dist/esm/index.js",

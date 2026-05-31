@@ -4,6 +4,22 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] — 2026-05-31
+
+Fixes from a third independent review.
+
+### Fixed
+
+- **`@Pattern` was stateful with a global/sticky (`/g`, `/y`) regex** —
+  `regex.test()` advances `lastIndex`, so repeated assignments alternated
+  pass/fail. `lastIndex` is now reset before each test.
+- **Docs:** the second resilience example contradicted the `@Fallback`-ordering
+  rule (it placed `@Fallback` innermost). Corrected to outermost.
+- `@Debounce` no longer keeps the event loop alive — its pending timer is
+  `unref`'d.
+- Documented that `builder()` / `@Builder` skip the constructor (so `@Configured`
+  injection doesn't populate; property validators still fire).
+
 ## [2.0.1] — 2026-05-31
 
 Fixes from a second independent production audit.
@@ -88,5 +104,6 @@ decorator **families**. First release of all of the following.
 Initial published releases: `@Value`, `@GenerateID`, `@NotNull`, `@ValidDate`,
 `@Counter`, `@Log`. See the git history for details.
 
+[2.0.2]: https://github.com/Master4Novice/decorators/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Master4Novice/decorators/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Master4Novice/decorators/releases/tag/v2.0.0

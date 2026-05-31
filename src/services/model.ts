@@ -219,6 +219,11 @@ function makeBuilder<T extends object>(ctor: new () => T): BuilderOf<T> {
  * Typed fluent builder for a class — `builder(User).name('a').age(5).build()`.
  * This needs no codegen and is fully typed via {@link BuilderOf}.
  * (`@Builder` also adds a runtime `.builder()` static for JS callers.)
+ *
+ * Note: `build()` uses `Object.create(prototype)` + assignment — it does **not**
+ * run the class constructor, so constructor logic and `@Configured` injection
+ * (`@Value`/`@Env` defaults) won't populate. Property validators still fire on
+ * each set. Use it for plain data classes, not ones that rely on the constructor.
  */
 export function builder<T extends object>(ctor: new () => T): BuilderOf<T> {
   return makeBuilder(ctor);
