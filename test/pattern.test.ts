@@ -63,6 +63,17 @@ describe('@Pattern (standalone)', () => {
     }).toThrow(ValidationError);
   });
 
+  it('rejects input longer than maxLength before running the regex (ReDoS guard)', () => {
+    class User {
+      @Pattern(/^[a-z]+$/, { maxLength: 10 }) name!: string;
+    }
+    const u = new User();
+    u.name = 'short';
+    expect(() => {
+      u.name = 'a'.repeat(11);
+    }).toThrow(ValidationError);
+  });
+
   it('rejects non-string values without coerce', () => {
     class User {
       @Pattern(/^\d+$/) code!: string;

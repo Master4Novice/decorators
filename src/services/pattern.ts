@@ -9,6 +9,13 @@ export interface PatternOptions {
    * numbers and other stringifiable values against the pattern. Default false.
    */
   coerce?: boolean;
+  /**
+   * Reject inputs longer than this many characters BEFORE running the regex.
+   * A cheap, strong defense against ReDoS: with a vulnerable (catastrophic-
+   * backtracking) regex, a long crafted input can block the event loop for
+   * seconds. Set this to the longest value you legitimately expect.
+   */
+  maxLength?: number;
 }
 
 /**
@@ -21,10 +28,15 @@ export interface PatternOptions {
  * on the class for this to work under any `useDefineForClassFields` setting
  * (otherwise it needs `useDefineForClassFields: false`).
  *
+ * ⚠️ **ReDoS:** the regex runs against assigned (possibly untrusted) values. A
+ * catastrophic-backtracking pattern (e.g. `/(a+)+$/`) on a crafted long input
+ * can block the event loop for seconds. Prefer linear/atomic regexes, and set
+ * `maxLength` to bound the worst case on untrusted input.
+ *
  * @example
  * \@Configured
  * class User {
- *   \@Pattern(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'invalid email' })
+ *   \@Pattern(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, { message: 'invalid email', maxLength: 254 })
  *   email!: string;
  *
  *   \@Pattern(/^\d{6}$/, { coerce: true }) // accepts 560001 or "560001"
@@ -36,12 +48,26 @@ export function Pattern(regex: RegExp, options: PatternOptions = {}) {
     addPropertyValidator(target, propertyKey, (value) => {
       if (value === undefined || value === null) return;
       const candidate = options.coerce ? String(value) : value;
-      if (typeof candidate !== 'string' || !regex.test(candidate)) {
+      if (typeof candidate !== 'string') {
         throw new ValidationError(
           options.message ??
-            `@Pattern: value for "${String(
-              propertyKey,
-            )}" does not match ${regex}.`,
+            `@Pattern: value for "${String(propertyKey)}" does not match ${regex}.`,
+        );
+      }
+      // ReDoS guard: bail before the regex on over-long input.
+      if (
+        options.maxLength !== undefined &&
+        candidate.length > options.maxLength
+      ) {
+        throw new ValidationError(
+          options.message ??
+            `@Pattern: value for "${String(propertyKey)}" exceeds maxLength ${options.maxLength}.`,
+        );
+      }
+      if (!regex.test(candidate)) {
+        throw new ValidationError(
+          options.message ??
+            `@Pattern: value for "${String(propertyKey)}" does not match ${regex}.`,
         );
       }
     });

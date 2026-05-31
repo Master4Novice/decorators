@@ -26,6 +26,23 @@ describe('redact', () => {
     });
   });
 
+  it('redacts compound/camelCase secret names via stem matching', () => {
+    const out = redact({
+      jwtSecret: 'a',
+      apiToken: 'b',
+      userPassword: 'c',
+      refreshToken: 'd',
+      label: 'keep',
+    });
+    expect(out).toEqual({
+      jwtSecret: '[REDACTED]',
+      apiToken: '[REDACTED]',
+      userPassword: '[REDACTED]',
+      refreshToken: '[REDACTED]',
+      label: 'keep',
+    });
+  });
+
   it('matches case- and separator-insensitively', () => {
     const out = redact({ API_KEY: 'x', AccessToken: 'y', normal: 'z' });
     expect(out).toEqual({

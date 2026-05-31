@@ -35,6 +35,24 @@ describe('@Min', () => {
     }).toThrow(ValidationError);
   });
 
+  it('rejects NaN across @Min/@Max/@Range (no silent accept)', () => {
+    class U {
+      @Min(0) a!: number;
+      @Max(10) b!: number;
+      @Range(0, 10) c!: number;
+    }
+    const u = new U();
+    expect(() => {
+      u.a = NaN;
+    }).toThrow(ValidationError);
+    expect(() => {
+      u.b = NaN;
+    }).toThrow(ValidationError);
+    expect(() => {
+      u.c = NaN;
+    }).toThrow(ValidationError);
+  });
+
   it('checks array length and allows null/undefined', () => {
     class U {
       @Min(2) tags!: string[];

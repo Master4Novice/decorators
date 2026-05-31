@@ -38,7 +38,7 @@ export function Min(min: number, options: ConstraintOptions = {}) {
     addPropertyValidator(target, propertyKey, (value) => {
       if (value === undefined || value === null) return;
       const m = measure(value);
-      if (m === null || m < min) {
+      if (m === null || Number.isNaN(m) || m < min) {
         throw new ValidationError(
           options.message ??
             `@Min: ${describe(propertyKey)} must be >= ${min}.`,
@@ -64,7 +64,7 @@ export function Max(max: number, options: ConstraintOptions = {}) {
     addPropertyValidator(target, propertyKey, (value) => {
       if (value === undefined || value === null) return;
       const m = measure(value);
-      if (m === null || m > max) {
+      if (m === null || Number.isNaN(m) || m > max) {
         throw new ValidationError(
           options.message ??
             `@Max: ${describe(propertyKey)} must be <= ${max}.`,
@@ -90,7 +90,7 @@ export function Range(min: number, max: number, options: ConstraintOptions = {})
     addPropertyValidator(target, propertyKey, (value) => {
       if (value === undefined || value === null) return;
       const m = measure(value);
-      if (m === null || m < min || m > max) {
+      if (m === null || Number.isNaN(m) || m < min || m > max) {
         throw new ValidationError(
           options.message ??
             `@Range: ${describe(propertyKey)} must be between ${min} and ${max}.`,

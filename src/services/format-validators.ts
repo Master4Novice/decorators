@@ -130,7 +130,7 @@ export function Positive(options: MessageOption = {}) {
   return function (target: object, propertyKey: string | symbol): void {
     addPropertyValidator(target, propertyKey, (value) => {
       if (optional(value)) return;
-      if (typeof value !== 'number' || value <= 0) {
+      if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) {
         throw new ValidationError(
           options.message ??
             `@Positive: "${String(propertyKey)}" must be a positive number.`,

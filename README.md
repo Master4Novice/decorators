@@ -228,8 +228,11 @@ request.
 - `redact(value, options?)` returns a deep copy with sensitive values masked
   (`'[REDACTED]'`). Sensitive = `@Secret`-marked property names ∪ a built-in list
   (`DEFAULT_SENSITIVE_KEYS`: `password`, `token`, `apiKey`, `authorization`, …) ∪
-  `options.keys`. Matching is case- and `_`/`-`-insensitive; nested objects,
-  arrays, and circular references are handled.
+  `options.keys`. Matching is case- and `_`/`-`-insensitive **and matches secret
+  stems as substrings**, so compound names like `jwtSecret`, `apiToken`, and
+  `userPassword` are masked too. Nested objects, arrays, `Map`/`Set`, and
+  circular references are handled; values past `maxDepth` (12) become
+  `'[Truncated]'` so deep secrets can't leak.
 - `redactFormat(options?)` is a winston format. This package's own logger already
   uses it; add it to your logger's `format.combine(...)` to protect your logs too.
 
@@ -261,7 +264,7 @@ Guards throw on invalid input — misuse fails fast instead of slipping through.
 | -------------------------- | ------ | ----------------- | ------------------------------------------------------ |
 | `@NotNull`                 | method   | `ValidationError` | rejects `null`/`undefined` arguments.                |
 | `@ValidDate`               | method   | `ValidationError` | first arg must be a valid `{ DD, MM, YYYY }` date.   |
-| `@Pattern(regex, opts?)`   | property | `ValidationError` | only allows assigning values that match the regex.   |
+| `@Pattern(regex, opts?)`   | property | `ValidationError` | only matches the regex. ⚠️ ReDoS: set `{ maxLength }` for untrusted input. |
 | `@Min(n)` / `@Max(n)`      | property | `ValidationError` | string/array **length** ≥ n / ≤ n, or **number** value. |
 | `@Range(min, max)`         | property | `ValidationError` | inclusive bounds on string/array length or number value. |
 | `@Email` `@URL` `@UUID`    | property | `ValidationError` | format checks for email / URL / UUID.                |

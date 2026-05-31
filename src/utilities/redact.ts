@@ -45,6 +45,22 @@ export interface RedactOptions {
 const normalize = (key: string): string =>
   key.toLowerCase().replace(/[_-]/g, '');
 
+// Strong secret "stems": if a normalized key CONTAINS one of these, it's treated
+// as sensitive. This catches compound/camelCase names like `jwtSecret`,
+// `apiToken`, `userPassword`, `accessToken` that an exact-match list misses.
+// Erring toward over-redaction is the safe default for a security feature.
+const SENSITIVE_STEMS = [
+  'password',
+  'passwd',
+  'secret',
+  'token',
+  'apikey',
+  'privatekey',
+  'authorization',
+  'credential',
+  'jwt',
+];
+
 function buildKeySet(extra?: string[]): Set<string> {
   const set = new Set<string>();
   for (const k of DEFAULT_SENSITIVE_KEYS) set.add(normalize(k));
@@ -55,7 +71,10 @@ function buildKeySet(extra?: string[]): Set<string> {
 
 /** True when a property name should be redacted, per the combined key set. */
 export function isSensitiveKey(key: string, keySet: Set<string>): boolean {
-  return keySet.has(normalize(key));
+  const norm = normalize(key);
+  if (keySet.has(norm)) return true;
+  // Substring match on strong stems catches compound names (jwtSecret, apiToken…).
+  return SENSITIVE_STEMS.some((stem) => norm.includes(stem));
 }
 
 /**
