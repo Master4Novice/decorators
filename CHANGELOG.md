@@ -4,6 +4,18 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] — 2026-06-06
+
+Discoverability only (no code changes).
+
+### Changed
+
+- Broadened npm keywords with natural search terms (typescript-decorators,
+  retry-decorator, circuit-breaker, validation-decorator, resilience,
+  secret-redaction, idempotency, zero-dependency).
+- Added a "Part of the @master4n toolkit" README section cross-linking the
+  sibling packages.
+
 ## [2.0.4] — 2026-06-01
 
 Hardening of the caching/idempotency decorators (`@Cache`, `@Memoize`, `@Dedupe`,
