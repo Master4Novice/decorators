@@ -1,7 +1,43 @@
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
-import copy from 'rollup-plugin-copy';
 import resolve from '@rollup/plugin-node-resolve';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+
+// Inline replacement for rollup-plugin-copy (unmaintained; pulled deprecated
+// glob@7 + inflight transitively). Copies static assets into dist/ and writes a
+// publish-ready package.json after the bundle is written.
+function copyDistAssets() {
+  return {
+    name: 'copy-dist-assets',
+    closeBundle() {
+      mkdirSync('dist', { recursive: true });
+      for (const file of ['README.md', 'LICENSE', 'llms.txt']) {
+        copyFileSync(file, `dist/${file}`);
+      }
+      const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+      const entry = (name) => ({
+        import: `./esm/${name}.js`,
+        require: `./commonjs/${name}.cjs`,
+        types: `./${name}.d.ts`,
+      });
+      pkg.main = './commonjs/index.cjs';
+      pkg.module = './esm/index.js';
+      pkg.types = './index.d.ts';
+      pkg.exports = {
+        '.': entry('index'),
+        './config': entry('config'),
+        './winston': entry('winston'),
+        './package.json': './package.json',
+      };
+      // Strip dev-only fields so the published tarball stays lean.
+      delete pkg.scripts;
+      delete pkg.devDependencies;
+      delete pkg.overrides; // dev-only npm resolution hints; inert for consumers
+      delete pkg.publishConfig;
+      writeFileSync('dist/package.json', JSON.stringify(pkg, null, 2));
+    },
+  };
+}
 
 // Three public entry points. Within each format build they are bundled TOGETHER
 // (multi-input + code-splitting) so rollup hoists shared modules — most
@@ -58,37 +94,7 @@ const config = [
     plugins: [
       resolve(),
       ts('dist/commonjs'),
-      copy({
-        targets: [
-          { src: ['README.md', 'LICENSE', 'llms.txt'], dest: 'dist' },
-          {
-            src: 'package.json',
-            dest: 'dist',
-            transform: (contents) => {
-              const pkg = JSON.parse(contents.toString());
-              const entry = (name) => ({
-                import: `./esm/${name}.js`,
-                require: `./commonjs/${name}.cjs`,
-                types: `./${name}.d.ts`,
-              });
-              pkg.main = './commonjs/index.cjs';
-              pkg.module = './esm/index.js';
-              pkg.types = './index.d.ts';
-              pkg.exports = {
-                '.': entry('index'),
-                './config': entry('config'),
-                './winston': entry('winston'),
-                './package.json': './package.json',
-              };
-              // Strip dev-only fields so the published tarball stays lean.
-              delete pkg.scripts;
-              delete pkg.devDependencies;
-              delete pkg.publishConfig;
-              return JSON.stringify(pkg, null, 2);
-            },
-          },
-        ],
-      }),
+      copyDistAssets(),
     ],
   },
   {

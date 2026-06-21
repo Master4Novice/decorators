@@ -1,6 +1,6 @@
 {
   "name": "@master4n/decorators",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "AI-friendly TypeScript decorators for Node/backend apps, in ten families: Inject (config & value injection), Guard (validation), Shape (transforms), Shield (access control & secret redaction), Flow (resilience — retry/timeout/circuit-breaker/rate-limit/cache), Insight (observability), Model (data classes), Route (Express REST controllers), Agent (LLM tools, guardrails, idempotency), and Craft (class/method ergonomics). One decorator replaces a block of code.",
   "main": "./dist/commonjs/index.cjs",
   "module": "./dist/esm/index.js",
@@ -111,18 +111,22 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/config": "^3.3.3",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
     "config": "^3.3.9",
     "winston": "^3.11.0",
-    "jest": "^29.7.0",
+    "jest": "^30.4.2",
     "rimraf": "^6.1.3",
     "rollup": "^4.60.4",
-    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-dts": "^6.4.1",
-    "ts-jest": "^29.3.0",
+    "ts-jest": "^29.4.11",
     "tslib": "^2.8.1",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "test-exclude": "^8.0.0",
+    "js-yaml": "^4.2.0",
+    "glob": "^13.0.6"
   },
   "contributors": [
     {

@@ -4,6 +4,30 @@ All notable changes to `@master4n/decorators` are documented here. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.6] — 2026-06-21
+
+Dev-toolchain cleanup + security fix (no code/data changes; consumers
+unaffected — the published tarball is byte-identical).
+
+### Security
+
+- Resolved the moderate `js-yaml` DoS advisory (GHSA-h67p-54hq-rp68) pulled
+  transitively via `@istanbuljs/load-nyc-config` through jest's coverage chain,
+  by forcing `js-yaml@^4.2.0` (load-nyc-config uses `.load`, compatible with
+  js-yaml 4.x). `npm audit` now reports 0 vulnerabilities.
+
+### Changed
+
+- Replaced `rollup-plugin-copy` (unmaintained) with a small inline `node:fs`
+  rollup plugin (identical dist asset copy + package.json transform) — drops the
+  deprecated transitive `glob@7.2.3` and `inflight@1.0.6`.
+- Upgraded the jest ecosystem to v30 (`jest`, `@types/jest`) and `ts-jest` to
+  `^29.4.11`.
+- `overrides`: `test-exclude@^8` (drops glob@7/inflight from the istanbul
+  chain) and `glob@^13` (dedupes off the deprecated `glob@10.5.0` that jest 30
+  would otherwise pull; glob@13 is current and supports Node 20+). The
+  `overrides` field is stripped from the published package.json.
+
 ## [2.0.5] — 2026-06-06
 
 Discoverability only (no code changes).
